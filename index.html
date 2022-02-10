@@ -5,8 +5,25 @@
         <meta name="viewport" content="width=device-width">
         <title>BookList</title>
         <link href="styles/layout.css" rel="stylesheet" type="text/css" />
+        <link href="styles/colorScheme.css" rel="stylesheet" type="text/css" />
     </head>
-    <body>
-        <p>Hello World</p>
+    <body class="desktopLayout greyColorScheme lightMode">
+        <div class="layoutContainer">
+            <div id="controlsContainer">
+                <button class="controlsButton">settings</button>
+                <button class="controlsButton">theme</button>
+                <div id="controlsSearchContainer">
+                    <input type="text" placeholder="Search.." name="controlsSearch" id="controlsSearchText">
+                    <button type="submit" id="controlsSearchSubmit" class="controlsButton">search</button>
+                </div>
+                <button class="controlsButton">new</button>
+            </div>
+            <div id="listContainer" class="subContainer">
+            </div>
+        </div>
+        <div class="layoutContainer">
+            <div id="detailsContainer" class="subContainer">
+            </div>
+        </div>
     </body>
 </html>

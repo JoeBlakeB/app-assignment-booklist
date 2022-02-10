@@ -1,0 +1,14 @@
+.greyColorScheme.lightMode {
+    --body-bg-color: #ddd;
+    --mainContainer-bg-color: #fff;
+    --controls-button-accent: #adadad;
+    --controls-button-background: #eee;
+    --text-color: #000;
+}
+.greyColorScheme.darkMode {
+    --body-bg-color: #111;
+    --mainContainer-bg-color: #222;
+    --controls-button-accent: #4d4d4d;
+    --controls-button-background: #303030;
+    --text-color: #fff;
+}

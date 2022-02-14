@@ -11,25 +11,33 @@ body {
     min-width:600px;
 }
 
-.desktopLayout .layoutContainer {
+.layoutContainer {
     height: calc(100vh - 16px);
-    width: calc(50% - 12px);
     padding: 8px 0 8px 8px;
     float: left;
     display: flex;
     flex-direction: column; 
 }
 
-.desktopLayout #controlsContainer {
+.desktopLayout .layoutContainer {
+    width: calc(50% - 12px);
+}
+
+.mobileLayout .layoutContainer {
+    width: calc(100% - 12px);
+}
+
+#controlsContainer {
     height: 48px;
     margin-bottom: 8px;
     display: flex;
     flex-direction: row; 
 }
 
-.desktopLayout .subContainer {
+.subContainer {
     background-color: var(--mainContainer-bg-color);
     flex-grow: 1;
+    overflow: auto;
 }
 
 /* controlsContainer */
@@ -72,3 +80,45 @@ body {
     background: none;
     border: none
 }
+
+/* Book List Table */
+
+table#bookList {
+    width: 100%;
+    background: purple;
+    border-collapse: collapse;
+}
+
+table#bookList td, table#bookList th{
+    border: solid blue;
+    padding: 6px;
+}
+
+table#bookList td:nth-child(1) {
+    background: red;
+    padding: 0;
+    width: 0;
+}
+
+.bookListCover {
+    width: 50px;
+    height: 80px;
+    display: block;
+}
+
+
+
+
+
+
+/* ul {
+    padding-left: 0;
+    list-style: none;
+}
+
+li {
+    background-color: rgb(151, 0, 221);
+    margin: 12px;
+    padding: 6px;
+    height: 64px;
+} */

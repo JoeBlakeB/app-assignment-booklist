@@ -4,14 +4,14 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width">
         <title>BookList</title>
-        <link href="styles/layout.css" rel="stylesheet" type="text/css" />
-        <link href="styles/colorScheme.css" rel="stylesheet" type="text/css" />
+        <link href="static/styles/layout.css" rel="stylesheet" type="text/css" />
+        <link href="static/styles/colorScheme.css" rel="stylesheet" type="text/css" />
     </head>
-    <body class="desktopLayout greyColorScheme lightMode">
+    <body class="desktopLayout greyColorScheme darkMode">
         <div class="layoutContainer">
             <div id="controlsContainer">
                 <button class="controlsButton">settings</button>
-                <button class="controlsButton">theme</button>
+                <button class="controlsButton">layout</button>
                 <div id="controlsSearchContainer">
                     <input type="text" placeholder="Search.." name="controlsSearch" id="controlsSearchText">
                     <button type="submit" id="controlsSearchSubmit" class="controlsButton">search</button>
@@ -19,6 +19,20 @@
                 <button class="controlsButton">new</button>
             </div>
             <div id="listContainer" class="subContainer">
+                <table id="bookList">
+                    <tr>
+                        <th>Cover</th>
+                        <th>Title</th>
+                        <th>Author</th>
+                        <th>ISBN</th>
+                    </tr>
+                    <tr>
+                        <td><img src="/home/joe/Pictures/Memes/Hoodcate/HoodCate.png" class="bookListCover" /></td>
+                        <td>JoeJoe's Bizare Adventure</td>
+                        <td>Sussy Baka</td>
+                        <td>01189998819991197253</td>
+                    </tr>
+                </table>
             </div>
         </div>
         <div class="layoutContainer">

@@ -85,40 +85,34 @@ body {
 
 table#bookList {
     width: 100%;
-    background: purple;
-    border-collapse: collapse;
+    border-spacing: 0;
 }
 
-table#bookList td, table#bookList th{
-    border: solid blue;
+table#bookList td, table#bookList th {
+    border-bottom-style: dotted;
+    border-color: var(--border-color);
+    border-width: 1px;
     padding: 6px;
 }
 
-table#bookList td:nth-child(1) {
-    background: red;
+table#bookList th {
+    /* always keep table header visible */
+    background: var(--mainContainer-bg-color);
+    position: sticky;
+    top: 0;
+}
+
+table#bookList td.Cover {
     padding: 0;
     width: 0;
 }
 
-.bookListCover {
+table#bookList td.ISBN {
+    width: 0;
+}
+
+table#bookList .Cover img {
     width: 50px;
     height: 80px;
     display: block;
 }
-
-
-
-
-
-
-/* ul {
-    padding-left: 0;
-    list-style: none;
-}
-
-li {
-    background-color: rgb(151, 0, 221);
-    margin: 12px;
-    padding: 6px;
-    height: 64px;
-} */

@@ -4,14 +4,23 @@ import flask
 import sys
 
 
-booklist = flask.Flask(__name__)
+booklist = flask.Flask(__name__, template_folder="html")
 
 
+# Send the booklist page with body classes added based on cookies and user agent.
 @booklist.route("/")
 def sendIndex():
-    return flask.send_file("html/index.html")
+    userAgent = flask.request.headers.get('User-Agent').lower()
+    if "phone" in userAgent or "android" in userAgent:
+        bodyClasses = "mobileLayout"
+    else:
+        bodyClasses = "desktopLayout"
+    
+    bodyClasses += " greyColorScheme lightMode"
+    return flask.render_template("index.html", bodyClasses=bodyClasses)
 
 
+# Send all files in the static folder
 @booklist.route("/static/<path:path>")
 def sendStatic(path):
     return flask.send_from_directory("static", path)

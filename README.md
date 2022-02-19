@@ -27,3 +27,4 @@ To stop the server send a KeyboardInterrupt (ctrl + C).
 ## Misc
 
 - Tested with Python 3.10.2 on Linux
+- Button icon SVGs from [Papirus Icon Theme](https://github.com/PapirusDevelopmentTeam/papirus-icon-theme)

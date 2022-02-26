@@ -4,20 +4,39 @@ import flask
 import sys
 
 
-booklist = flask.Flask(__name__, template_folder="html")
+booklist = flask.Flask(__name__, template_folder=".")
+
+booklist.config['TEMPLATES_AUTO_RELOAD'] = True
+
+validColorSchemes = [
+    "breeze",
+    "white",
+    "black",
+    "nordic",
+    "iolite"
+]
 
 
 # Send the booklist page with body classes added based on cookies and user agent.
 @booklist.route("/")
 def sendIndex():
     userAgent = flask.request.headers.get('User-Agent').lower()
-    if "phone" in userAgent or "android" in userAgent:
+    if ("phone" in userAgent or "android" in userAgent) or (
+        "mobile" in str(flask.request.cookies.get("uiLayout"))):
         bodyClasses = "mobileLayout"
     else:
         bodyClasses = "desktopLayout"
-    
-    bodyClasses += " greyColorScheme lightMode"
-    return flask.render_template("index.html", bodyClasses=bodyClasses)
+
+    uiTheme = flask.request.cookies.get("uiTheme")
+    if uiTheme in validColorSchemes:
+        bodyClasses += " " + uiTheme + "ColorScheme"
+    else:
+        bodyClasses += " breezeColorScheme"
+
+    return flask.render_template("index.html", 
+        bodyClasses=bodyClasses,
+        colorSchemes=" ".join(validColorSchemes)
+    )
 
 
 # Send all files in the static folder
@@ -26,10 +45,13 @@ def sendStatic(path):
     return flask.send_from_directory("static", path)
 
 
-@booklist.route("/placeholderimage")
-def placeholderImage():
+# Only sends placeholder image at the moment
+# Will send cover for a specific book
+# size will either be preview or full
+@booklist.route("/book/cover/<isbn>/<path:size>")
+def placeholderImage(isbn, size):
     return flask.send_file("/home/joe/Pictures/Memes/Hoodcate/HoodCate.png")
-    
+
 
 if __name__ == "__main__":
     if "--help" in sys.argv:
@@ -59,7 +81,8 @@ if __name__ == "__main__":
             useWaitress = True
         except:
             print("Waitress is not installed, using built-in WSGI server.")
-        
+
+    # Run server
     if useWaitress:
         waitress.serve(booklist, host=host, port=port)
     else:

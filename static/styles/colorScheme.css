@@ -1,16 +1,57 @@
-.greyColorScheme.lightMode {
-    --body-bg-color: #ddd;
+.breezeColorScheme {
+    --body-bg-color: #eff0f1;
     --mainContainer-bg-color: #fff;
-    --controls-button-accent: #adadad;
-    --controls-button-background: #eee;
+    --button-accent: #232629;
+    --button-background: #232629;
+    --button-color: #fff;
+    --border-color: #707d8a;
+    --text-color: #232629;
+    --selected-book: #3daee9;
+}
+.breezeColorScheme input {
+    --text-color: #eff0f1;
+}
+
+.whiteColorScheme {
+    --body-bg-color: #eff0f1;
+    --mainContainer-bg-color: #fff;
+    --button-accent: #adadad;
+    --button-background: #ddd;
+    --button-color: #444;
     --border-color: #aaa;
     --text-color: #000;
+    --selected-book: #656565;
 }
-.greyColorScheme.darkMode {
+
+.blackColorScheme {
     --body-bg-color: #111;
     --mainContainer-bg-color: #222;
-    --controls-button-accent: #4d4d4d;
-    --controls-button-background: #303030;
-    --border-color: orange;
+    --button-accent: #4d4d4d;
+    --button-background: #303030;
+    --button-color: #ccc;
+    --border-color: #666;
     --text-color: #fff;
+    --selected-book: #656565;
+}
+
+.nordicColorScheme {
+    --body-bg-color: #3b4252;
+    --mainContainer-bg-color: #434c5e;
+    --button-accent: #666a73;
+    --button-background: #3c4454;
+    --button-color: #d8dee9;
+    --border-color: #d8dee9;
+    --text-color: #d8dee9;
+    --selected-book: #90bcba;
+}
+
+.ioliteColorScheme {
+    --body-bg-color: #212133;
+    --mainContainer-bg-color: #2b2b42;
+    --button-accent: #43484c;
+    --button-background: #2b2b42;
+    --button-color: #d1d2d6;
+    --border-color: #9ca4c2;
+    --text-color: #eff0f1;
+    --selected-book: #3d62f9;
 }

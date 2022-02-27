@@ -40,6 +40,8 @@ const settings = {
         }
         document.body.className = classes.join(" ");
     },
+    // Color Schemes in /static/styles/colorSchemes.css and must be added sendIndex in server.py
+    colorSchemes: ["breeze", "white", "black", "nordic", "iolite"],
     // Generate the HTML for the settings page and add it to the detailsContainer div
     openSettingsPage: function() {
         var settingsHTML = "<div id='settingsContainer'>\
@@ -48,9 +50,7 @@ const settings = {
             <h2>Theme</h2>";
 
         var selectedTheme = this.getCurrentBodyClass("ColorScheme");
-        // ColorSchemes is added with onload in the script HTML tag which 
-        // has the string added via flask render_template in sendIndex
-        for (let theme of this.colorSchemes.split(" ")) {
+        for (let theme of this.colorSchemes) {
             let buttonText = "Select";
             if (theme == selectedTheme) {
                 buttonText += "ed";

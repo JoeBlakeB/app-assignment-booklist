@@ -8,14 +8,6 @@ booklist = flask.Flask(__name__, template_folder=".")
 
 booklist.config['TEMPLATES_AUTO_RELOAD'] = True
 
-validColorSchemes = [
-    "breeze",
-    "white",
-    "black",
-    "nordic",
-    "iolite"
-]
-
 
 # Send the booklist page with body classes added based on cookies and user agent.
 @booklist.route("/")
@@ -28,15 +20,13 @@ def sendIndex():
         bodyClasses = "desktopLayout"
 
     uiTheme = flask.request.cookies.get("uiTheme")
-    if uiTheme in validColorSchemes:
+    # Themes are kept in /static/styles/colorScheme.css
+    if uiTheme in ["breeze", "white", "black", "nordic", "iolite"]:
         bodyClasses += " " + uiTheme + "ColorScheme"
     else:
         bodyClasses += " breezeColorScheme"
 
-    return flask.render_template("index.html", 
-        bodyClasses=bodyClasses,
-        colorSchemes=" ".join(validColorSchemes)
-    )
+    return flask.render_template("index.html", bodyClasses=bodyClasses)
 
 
 # Send all files in the static folder

@@ -1,3 +1,9 @@
+/* 
+ * Themes must be added to:
+ *  server.py - sendIndex - if uiTheme in [...]:
+ *  static/scripts/settings.js - settings.colorSchemes
+ */
+
 .breezeColorScheme {
     --body-bg-color: #eff0f1;
     --mainContainer-bg-color: #fff;

@@ -77,11 +77,11 @@ button, #controlsSearchContainer {
 }
 
 button:hover {
-    background: red; /*numbumber*/
+    background: var(--hover-background);
 }
 
 button:active {
-    background: orange; /*numbumber*/
+    background: var(--active-background);
 }
 
 #controlsSearchContainer {

@@ -60,4 +60,4 @@ const settings = {
         settingsHTML += "</div>";
         document.getElementById("detailsContainer").innerHTML = settingsHTML;
     }
-}
+};

@@ -15,6 +15,7 @@
     --border-color: #707d8a;
     --text-color: #232629;
     --selected-book: #3daee9;
+    --icon-filter: brightness(100%) contrast(130%) invert(95%);
 }
 .breezeColorScheme input {
     --text-color: #eff0f1;
@@ -31,6 +32,7 @@
     --border-color: #aaa;
     --text-color: #000;
     --selected-book: #656565;
+    --icon-filter: none;
 }
 
 .blackColorScheme {
@@ -44,6 +46,7 @@
     --border-color: #666;
     --text-color: #fff;
     --selected-book: #656565;
+    --icon-filter: brightness(130%) contrast(120%) invert(8%);
 }
 
 .nordicColorScheme {
@@ -57,6 +60,7 @@
     --border-color: #d8dee9;
     --text-color: #d8dee9;
     --selected-book: #90bcba;
+    --icon-filter: brightness(120%) contrast(100%) invert(0%);
 }
 
 .ioliteColorScheme {
@@ -70,4 +74,5 @@
     --border-color: #9ca4c2;
     --text-color: #eff0f1;
     --selected-book: #3d62f9;
+    --icon-filter: brightness(120%);
 }

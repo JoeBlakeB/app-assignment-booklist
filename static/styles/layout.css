@@ -145,8 +145,8 @@ table#bookList .Cover img {
 
 /* Settings page layout */
 
-h1 {
-    margin: 4px;
+h1, h2 {
+    margin: 6px;
 }
 
 .layoutExample {
@@ -164,4 +164,27 @@ h1 {
 
 .layoutExample button {
     width: 70px;
+}
+
+.setLayoutButton {
+    width: 200px;
+    height: 200px;
+    margin: 10px;
+}
+
+.setLayoutButton svg {
+    position: relative;
+    top: 3px;
+    left: 0;
+    filter: var(--icon-filter);
+}
+
+/* Display only one container on mobile layout */
+
+.mobileLayout.showDetailsContainer #controlsBooklistContainer {
+    display: none;
+}
+
+.mobileLayout:not(.showDetailsContainer) #detailsMainContainer {
+    display: none;
 }

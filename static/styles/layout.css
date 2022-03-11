@@ -28,7 +28,7 @@ body {
 
 #controlsContainer {
     height: 48px;
-    margin-bottom: 8px;
+    margin: 4px 4px 8px 4px;
     display: flex;
     flex-direction: row; 
 }
@@ -63,11 +63,19 @@ button {
     padding: 0;
 }
 
+#controlsContainer .controlsButton svg {
+    right: 2px;
+    bottom: 2px;
+}
+
+#backButton svg {
+    position: relative;
+    top: 2px;
+}
+
 .controlsButton svg {
     position: relative;
     fill: var(--button-color);
-    right: 2px;
-    bottom: 2px;
 }
 
 button, #controlsSearchContainer {
@@ -145,10 +153,6 @@ table#bookList .Cover img {
 
 /* Settings page layout */
 
-h1, h2 {
-    margin: 6px;
-}
-
 .layoutExample {
     height: 60px;
     margin: 8px;
@@ -187,4 +191,16 @@ h1, h2 {
 
 .mobileLayout:not(.showDetailsContainer) #detailsMainContainer {
     display: none;
+}
+
+/* Text Style */
+h1 {
+    font-size: 36pt;
+    margin: 0px 12px;
+    float: left;
+}
+
+h2 {
+    margin: 8px;
+    clear: left;
 }

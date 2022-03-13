@@ -3,15 +3,17 @@
 import flask
 import sys
 
+from database import database
+
 
 booklist = flask.Flask(__name__, template_folder=".")
 
 booklist.config['TEMPLATES_AUTO_RELOAD'] = True
 
 
-# Send the booklist page with body classes added based on cookies and user agent.
 @booklist.route("/")
 def sendIndex():
+    """Send the booklist page with body classes added based on cookies and user agent."""
     userAgent = flask.request.headers.get('User-Agent').lower()
     if ("phone" in userAgent or "android" in userAgent) or (
         "mobile" in str(flask.request.cookies.get("uiLayout"))):
@@ -29,9 +31,9 @@ def sendIndex():
     return flask.render_template("index.html", bodyClasses=bodyClasses)
 
 
-# Send all files in the static folder
 @booklist.route("/static/<path:path>")
 def sendStatic(path):
+    """Send all files in the static folder"""
     return flask.send_from_directory("static", path)
 
 
@@ -52,6 +54,7 @@ if __name__ == "__main__":
         print("  --host HOST       Set the servers host IP")
         print("  --port PORT       Set the servers port")
         print("  --built-in-wsgi   Use flasks built-in WSGI server instead of waitress")
+        print("  --data-dir DIR    Set the directory where data is stored")
         exit()
 
     # Get host and port from argv or use the defaults
@@ -72,8 +75,15 @@ if __name__ == "__main__":
         except:
             print("Waitress is not installed, using built-in WSGI server.")
 
+    # Startup
+    database.load(database)
+    
     # Run server
     if useWaitress:
         waitress.serve(booklist, host=host, port=port)
     else:
         booklist.run(host=host, port=port)
+
+    # Shut down
+    print("Saving database...")
+    database.save(database)

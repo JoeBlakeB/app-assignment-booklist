@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 
 import flask
+import os
 import sys
 
 from database import database
 
-
 booklist = flask.Flask(__name__, template_folder=".")
-
 booklist.config['TEMPLATES_AUTO_RELOAD'] = True
+booklist.url_map.strict_slashes = False
 
 
 @booklist.route("/")
@@ -16,7 +16,7 @@ def sendIndex():
     """Send the booklist page with body classes added based on cookies and user agent."""
     userAgent = flask.request.headers.get('User-Agent').lower()
     if ("phone" in userAgent or "android" in userAgent) or (
-        "mobile" in str(flask.request.cookies.get("uiLayout"))):
+            "mobile" in str(flask.request.cookies.get("uiLayout"))):
         bodyClasses = "mobileLayout"
     else:
         bodyClasses = "desktopLayout"
@@ -37,12 +37,16 @@ def sendStatic(path):
     return flask.send_from_directory("static", path)
 
 
-# Only sends placeholder image at the moment
-# Will send cover for a specific book
-# size will either be preview or full
-@booklist.route("/book/cover/<isbn>/<path:size>")
-def placeholderImage(isbn, size):
-    return flask.send_file("/home/joe/Pictures/Memes/Hoodcate/HoodCate.png")
+@booklist.route("/book/cover/<bookID>", defaults={"size": ""})
+@booklist.route("/book/cover/<bookID>/preview", defaults={"size": "Preview"})
+def bookCover(bookID, size):
+    """Sends the cover of a book"""
+    if db.bookExists(bookID):
+        coverFilename = db.fullFilePath(f"books/{bookID}/cover{size}.png")
+        if os.path.exists(coverFilename):
+            return flask.send_file(coverFilename)
+    # If book doesnt exist or if book doesnt have cover
+    return flask.send_file(f"static/images/bookCoverPlaceholder{size}.png"), 404
 
 
 if __name__ == "__main__":
@@ -76,8 +80,9 @@ if __name__ == "__main__":
             print("Waitress is not installed, using built-in WSGI server.")
 
     # Startup
-    database.load(database)
-    
+    db = database()
+    db.load()
+
     # Run server
     if useWaitress:
         waitress.serve(booklist, host=host, port=port)
@@ -86,4 +91,4 @@ if __name__ == "__main__":
 
     # Shut down
     print("Saving database...")
-    database.save(database)
+    db.save()

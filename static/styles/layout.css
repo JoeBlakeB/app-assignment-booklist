@@ -62,15 +62,15 @@ button {
     float: left;
     padding: 0;
 }
-
+ 
 #controlsContainer .controlsButton svg {
-    right: 2px;
-    bottom: 2px;
+    right: 4%;
+    bottom: 4%;
 }
 
 #backButton svg {
     position: relative;
-    top: 2px;
+    top: 5%;
 }
 
 .controlsButton svg {
@@ -146,7 +146,7 @@ table#bookList td.ISBN {
 }
 
 table#bookList .Cover img {
-    width: 50px;
+    width: 60px;
     height: 80px;
     display: block;
 }

@@ -6,7 +6,7 @@ import sys
 class database:
     dataFilename = "data.json"
     
-    fullFilePath = lambda self, filename : self.dataDir + "/" + filename
+    fullFilePath = lambda self, filename : os.path.join(self.dataDir, filename)
 
     def load(self):
         """Load the database"""
@@ -18,7 +18,7 @@ class database:
 
         os.makedirs(self.dataDir, exist_ok=True)
 
-        filename = self.fullFilePath(self, self.dataFilename)
+        filename = self.fullFilePath(self.dataFilename)
 
         try:
             # Load database
@@ -33,15 +33,16 @@ class database:
                 # Cannot load backup either
                 self.data = {}
 
-        print(self.data)
-
     def save(self):
         """Save the database"""
-
-        filename = self.fullFilePath(self, self.dataFilename)
+        filename = self.fullFilePath(self.dataFilename)
 
         if os.path.exists(filename):
             os.rename(filename, filename + ".bak")
 
         with open(filename, "w") as dataFile:
             dataFile.write(json.dumps(self.data, indent=4))
+    
+    def bookExists(self, bookID):
+        """Returns a bool for if a book exists in the database"""
+        return True

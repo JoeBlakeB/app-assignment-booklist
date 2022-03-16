@@ -44,5 +44,5 @@ class database:
             dataFile.write(json.dumps(self.data, indent=4))
     
     def bookExists(self, bookID):
-        """Returns a bool for if a book exists in the database"""
-        return True
+        # TODO: """Returns a bool for if a book exists in the database"""
+        return False

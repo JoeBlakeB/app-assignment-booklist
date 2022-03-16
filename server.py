@@ -7,8 +7,14 @@ import sys
 from database import database
 
 booklist = flask.Flask(__name__, template_folder=".")
-booklist.config['TEMPLATES_AUTO_RELOAD'] = True
+booklist.config["TEMPLATES_AUTO_RELOAD"] = True
 booklist.url_map.strict_slashes = False
+
+@booklist.after_request
+def afterRequest(response):
+    """Add server to user agent"""
+    response.headers["Server"] = f"AppAssignmentBooklist Python/{sys.version.split()[0]}"
+    return response
 
 
 @booklist.route("/")
@@ -47,6 +53,26 @@ def bookCover(bookID, size):
             return flask.send_file(coverFilename)
     # If book doesnt exist or if book doesnt have cover
     return flask.send_file(f"static/images/bookCoverPlaceholder{size}.png"), 404
+
+
+@booklist.route("/api/new", methods=["POST"])
+def apiNew():
+    pass
+
+
+@booklist.route("/api/update/<bookID>", methods=["PUT"])
+def apiUpdate(bookID):
+    pass
+
+
+@booklist.route("/api/delete/<bookID>")
+def apiDelete(bookID):
+    pass
+
+
+@booklist.route("/api/search/<query>")
+def apiSearch(bookID):
+    pass
 
 
 if __name__ == "__main__":

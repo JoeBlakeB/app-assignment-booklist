@@ -8,14 +8,18 @@ class database:
     
     fullFilePath = lambda self, filename : os.path.join(self.dataDir, filename)
 
+    def __init__(self, dataDir=None):
+        """Set the data directory for the database"""
+        if dataDir != None:
+            self.dataDir = dataDir
+        else:
+            if "--data-dir" in sys.argv:
+                self.dataDir = sys.argv[sys.argv.index("--data-dir") + 1]
+            else:
+                self.dataDir = "./data/"
+
     def load(self):
         """Load the database"""
-        # Get data directory from argsv
-        if "--data-dir" in sys.argv:
-            self.dataDir = sys.argv[sys.argv.index("--data-dir") + 1]
-        else:
-            self.dataDir = "./data/"
-
         os.makedirs(self.dataDir, exist_ok=True)
 
         filename = self.fullFilePath(self.dataFilename)

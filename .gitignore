@@ -1,3 +1,4 @@
 .directory
-data/*
+.vscode/
 __pycache__/
+data/*

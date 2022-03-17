@@ -16,9 +16,9 @@ Data is stored in `./data` and this can be changed with `--data-dir`:
 
 `./server.py --data-dir /path/to/data/directory/`
 
-By default waitress will be used as the WSGI if it is installed and will use the built-in WSGI if it isn't. To force the server to only use the built-in WSGI add the `--built-in-wsgi` argument:
+By default waitress will be used as the WSGI if it is installed and will use werkzeug (the built-in WSGI) if it isn't. To force the server to only use werkzeug add the `--werkzeug` argument:
 
-`./server.py --built-in-wsgi`
+`./server.py --werkzeug`
 
 To stop the server send a KeyboardInterrupt (ctrl + C).
 

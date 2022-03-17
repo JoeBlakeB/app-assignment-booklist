@@ -1,10 +1,12 @@
 import json
 import os
 import sys
+import uuid
 
 
 class database:
     dataFilename = "data.json"
+    bookFields = ("name", "author", "series", "isbn", "releaseDate", "publisher", "language")
     
     fullFilePath = lambda self, filename : os.path.join(self.dataDir, filename)
 
@@ -46,7 +48,77 @@ class database:
 
         with open(filename, "w") as dataFile:
             dataFile.write(json.dumps(self.data, indent=4))
-    
-    def bookExists(self, bookID):
-        # TODO: """Returns a bool for if a book exists in the database"""
+
+    def bookAdd(self, bookData):
+        """Takes a dict with book data and returns the new book ID"""
+        # If book doesnt have a name, dont add to database
+        if not "name" in bookData:
+            return False
+        
+        # Generate book dict with all fields
+        newBook = {"files": [], "hasCover": False}
+        for field in self.bookFields:
+            if field in bookData:
+                newBook[field] = bookData[field]
+            else:
+                newBook[field] = ""
+
+        # Generate book id and add to database
+        bookID = None
+        while bookID in self.data or bookID == None:
+            bookID = str(uuid.uuid4())
+        self.data[bookID] = newBook
+        return bookID
+
+    def bookEdit(self, bookID, newData):
+        """Edit bookIDs data in the fields in of newData"""
+        for field in self.bookFields:
+            if field in newData:
+                self.data[bookID][field] = newData[field]
+
+    def bookGet(self, bookID):
+        """Returns the book data if it exists, or False if it doesnt"""
+        if bookID in self.data:
+            return self.data[bookID]
         return False
+
+    def bookDelete(self, bookID):
+        """Delete a book and its files"""
+        # Delete files
+        filesToDelete = self.data[bookID]["files"]
+        bookPath = self.fullFilePath("books/" + bookID + "/")
+        if self.data[bookID]["hasCover"]:
+            filesToDelete += ["cover.png", "coverPreview.png"]
+        for file in filesToDelete:
+            os.remove(bookPath + file)
+        # Delete directory
+        if os.path.exists(bookPath):
+            os.rmdir(bookPath)
+        # Delete from database
+        del self.data[bookID]
+
+    # def bookSearch(self):
+    #     # TODO: """"""
+    #     pass
+    
+    # def fileAdd(self):
+    #     # TODO: """"""
+    #     pass
+
+    # def fileDelete(self):
+    #     # TODO: """"""
+    #     pass
+
+    # def coverAdd(self):
+    #     # TODO: """"""
+    #     pass
+
+    def coverExists(self, bookID):
+        """Returns a bool for if a book has a cover"""
+        if bookID in self.data:
+            return self.data[bookID]["hasCover"]
+        return False
+
+    # def coverDelete(self):
+    #     # TODO: """"""
+    #     pass

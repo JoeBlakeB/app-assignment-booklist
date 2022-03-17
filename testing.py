@@ -60,6 +60,74 @@ class databaseTests(unittest.TestCase):
         db.load()
         self.assertEqual(db.data, dbDataShouldBe)
         db.save()
+
+    def testBookAddEditDelete(self):
+        testBooks = [
+            {"name": "Harry Potter and the Philosophers Stone", "author": "JK Rowling"},
+            {"name": "test book 1"},
+            {"name": "test book 2", "isbn": "9780141393049"}
+        ]
+        bookDefaults = {"name": "", "author": "", "series": "", "isbn": "", "releaseDate": "",
+                        "publisher": "", "language": "", "files": [], "hasCover": False}
+        import database
+        db = database.database(self.tempDataDir + "testBookAddEditDelete")
+        db.data = {}
+        bookIDs = []
+        # Add
+        for book in testBooks:
+            bookID = db.bookAdd(book)
+            self.assertEqual(db.bookGet(bookID), {**bookDefaults, **book})
+            bookIDs.append(bookID)
+        for i in range(len(testBooks)):
+            self.assertEqual(db.bookGet(bookIDs[i]), {**bookDefaults, **testBooks[i]})
+        self.assertEqual(len(db.data), len(testBooks))
+        # Edit
+        bookDefaults["language"] = "english"
+        for i in range(len(testBooks)):
+            db.bookEdit(bookIDs[i], {"language": "english"})
+            self.assertEqual(db.bookGet(bookIDs[i]), {**bookDefaults, **testBooks[i]})
+        # Delete
+        bookFilePath = self.tempDataDir + "testBookAddEditDelete/books/" + bookIDs[0]
+        os.makedirs(bookFilePath)
+        open(bookFilePath + "/testFile", "w").close()
+        db.data[bookIDs[0]]["files"] = ["testFile"]
+        for bookID in bookIDs:
+            db.bookDelete(bookID)
+            self.assertFalse(db.bookGet(bookID))
+        self.assertEqual(db.data, {})
+        self.assertFalse(os.path.exists(bookFilePath))
+
+    # def testBookSearch(self):
+    #     # TODO
+    #     pass
+
+    # def testFileAdd(self):
+    #     # TODO
+    #     pass
+
+    # def testFileDelete(self):
+    #     # TODO
+    #     pass
+
+    # def testCoverAdd(self):
+    #     # TODO
+    #     pass
+
+    def testCoverExists(self):
+        import database
+        db = database.database()
+        db.data = {
+            "book1": {"hasCover": True},
+            "book2": {"hasCover": False}
+        }
+        self.assertTrue(db.coverExists("book1"))
+        self.assertFalse(db.coverExists("book2"))
+        self.assertFalse(db.coverExists("book3"))
+
+    # def testCoverDelete(self):
+    #     # TODO
+    #     pass
+
             
 
 class requestsTests(unittest.TestCase):

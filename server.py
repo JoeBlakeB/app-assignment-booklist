@@ -47,7 +47,7 @@ def sendStatic(path):
 @booklist.route("/book/cover/<bookID>/preview", defaults={"size": "Preview"})
 def bookCover(bookID, size):
     """Sends the cover of a book"""
-    if db.bookExists(bookID):
+    if db.coverExists(bookID):
         coverFilename = db.fullFilePath(f"books/{bookID}/cover{size}.png")
         if os.path.exists(coverFilename):
             return flask.send_file(coverFilename)
@@ -55,24 +55,27 @@ def bookCover(bookID, size):
     return flask.send_file(f"static/images/bookCoverPlaceholder{size}.png"), 404
 
 
-@booklist.route("/api/new", methods=["POST"])
-def apiNew():
-    pass
+# @booklist.route("/api/new", methods=["POST"])
+# def apiNew():
+#     # TODO: """"""
+#     pass
 
 
-@booklist.route("/api/update/<bookID>", methods=["PUT"])
-def apiUpdate(bookID):
-    pass
+# @booklist.route("/api/update/<bookID>", methods=["PUT"])
+# def apiUpdate(bookID):
+#     # TODO: """"""
+#     pass
+
+# @booklist.route("/api/delete/<bookID>")
+# def apiDelete(bookID):
+#     # TODO: """"""
+#     pass
 
 
-@booklist.route("/api/delete/<bookID>")
-def apiDelete(bookID):
-    pass
-
-
-@booklist.route("/api/search/<query>")
-def apiSearch(bookID):
-    pass
+# @booklist.route("/api/search/<query>")
+# def apiSearch(bookID):
+#     # TODO: """"""
+#     pass
 
 
 if __name__ == "__main__":
@@ -83,7 +86,7 @@ if __name__ == "__main__":
         print("  --help            Display this help and exit")
         print("  --host HOST       Set the servers host IP")
         print("  --port PORT       Set the servers port")
-        print("  --built-in-wsgi   Use flasks built-in WSGI server instead of waitress")
+        print("  --werkzeug        Use werkzeug instead of waitress")
         print("  --data-dir DIR    Set the directory where data is stored")
         exit()
 
@@ -96,14 +99,14 @@ if __name__ == "__main__":
         port = sys.argv[sys.argv.index("--port") + 1]
 
     # Use waitress as the WSGI server if it is installed,
-    # but use built-in if it isnt, or if --built-in-wsgi argument.
+    # but use built-in if it isnt, or if --werkzeug argument.
     useWaitress = False
-    if not "--built-in-wsgi" in sys.argv:
+    if not "--werkzeug" in sys.argv:
         try:
             import waitress
             useWaitress = True
         except:
-            print("Waitress is not installed, using built-in WSGI server.")
+            print("Waitress is not installed, using built-in WSGI server (werkzeug).")
 
     # Startup
     db = database()

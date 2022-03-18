@@ -6,8 +6,12 @@ import shutil
 import unittest
 import requests
 
+import database
+import server
+
 
 def setUp(self):
+    """Create temporary directory for each set of tests."""
     if os.name == "posix":
         self.tempDataDir = "/tmp/AppAssignmentBooklistTest/"
     else:
@@ -16,6 +20,7 @@ def setUp(self):
 
 
 def tearDown(self):
+    """Remove temporary directory for each set of tests."""
     shutil.rmtree(self.tempDataDir)
 
 
@@ -28,93 +33,66 @@ class databaseTests(unittest.TestCase):
     def tearDownClass(self):
         tearDown(self)
 
-    def testFullFilePath(self):
-        import database
-        db = database.database("/test/directory")
-        self.assertEqual(db.fullFilePath("testFile"), "/test/directory/testFile")
-        self.assertEqual(db.fullFilePath("dir/test"), "/test/directory/dir/test")
-
-    def testInit(self):
-        import database
-        database.sys.argv = ["--data-dir", "testDir1"]
-        argv = database.database()
-        param = database.database("testDir2")
-        self.assertEqual(argv.dataDir, "testDir1")
-        self.assertEqual(param.dataDir, "testDir2")
-
     def testSaveLoad(self):
+        """Tests saving and loading the database."""
         dbDataShouldBe = {}
-        import database
-        # Test loading and saving the database lots of times
         for i in range(16):
-            db = database.database(self.tempDataDir + "testSaveLoad")
+            db = database.database(self.tempDataDir)
             db.load()
             self.assertEqual(db.data, dbDataShouldBe)
             db.data[str(i)] = i ** i
             dbDataShouldBe[str(i)] = i ** i
             db.save()
-        # Test loading backup file
-        os.remove(self.tempDataDir + "testSaveLoad/data.json")
+        os.remove(self.tempDataDir + "data.json")
         dbDataShouldBe.popitem()
-        db = database.database(self.tempDataDir + "testSaveLoad")
+        db = database.database(self.tempDataDir)
         db.load()
         self.assertEqual(db.data, dbDataShouldBe)
         db.save()
 
     def testBookAddEditDelete(self):
-        testBooks = [
-            {"name": "Harry Potter and the Philosophers Stone", "author": "JK Rowling"},
-            {"name": "test book 1"},
-            {"name": "test book 2", "isbn": "9780141393049"}
-        ]
-        bookDefaults = {"name": "", "author": "", "series": "", "isbn": "", "releaseDate": "",
-                        "publisher": "", "language": "", "files": [], "hasCover": False}
-        import database
-        db = database.database(self.tempDataDir + "testBookAddEditDelete")
-        db.data = {}
-        bookIDs = []
-        # Add
-        for book in testBooks:
-            bookID = db.bookAdd(book)
-            self.assertEqual(db.bookGet(bookID), {**bookDefaults, **book})
-            bookIDs.append(bookID)
-        for i in range(len(testBooks)):
-            self.assertEqual(db.bookGet(bookIDs[i]), {**bookDefaults, **testBooks[i]})
-        self.assertEqual(len(db.data), len(testBooks))
-        # Edit
-        bookDefaults["language"] = "english"
-        for i in range(len(testBooks)):
-            db.bookEdit(bookIDs[i], {"language": "english"})
-            self.assertEqual(db.bookGet(bookIDs[i]), {**bookDefaults, **testBooks[i]})
-        # Delete
-        bookFilePath = self.tempDataDir + "testBookAddEditDelete/books/" + bookIDs[0]
+        """Tests the database for adding, editing, and deleting books from the database."""
+        db = database.database(self.tempDataDir)
+        db.load()
+
+        # Add book
+        book = {"name": "Harry Potter and the Philosophers Stone"}
+        bookInDatabase = {**book, "author": "", "series": "", "isbn": "", "releaseDate": "",
+            "publisher": "", "language": "", "files": [], "hasCover": False}
+        bookID = db.bookAdd(book)
+        self.assertEqual(db.bookGet(bookID), bookInDatabase)
+        
+        # Edit book
+        bookInDatabase["language"] = "english"
+        db.bookEdit(bookID, {"language": "english"})
+        self.assertEqual(db.bookGet(bookID), bookInDatabase)
+
+        # Make file for testing delete
+        bookFilePath = self.tempDataDir + "books/" + bookID
         os.makedirs(bookFilePath)
         open(bookFilePath + "/testFile", "w").close()
-        db.data[bookIDs[0]]["files"] = ["testFile"]
-        for bookID in bookIDs:
-            db.bookDelete(bookID)
-            self.assertFalse(db.bookGet(bookID))
-        self.assertEqual(db.data, {})
+
+        # Delete book
+        db.bookDelete(bookID)
+        self.assertFalse(db.bookGet(bookID))
         self.assertFalse(os.path.exists(bookFilePath))
 
-    # def testBookSearch(self):
-    #     # TODO
-    #     pass
+    def testSearch(self):
+        """Tests the book search.
+        
+        only makes sure relavant books are found and irrelevant books arent found
+        does not test the order of books or how relevant the found books are"""
+        # TODO
+        pass
 
-    # def testFileAdd(self):
-    #     # TODO
-    #     pass
+    def testFiles(self):
+        """Tests adding and deleting files."""
+        # TODO
+        pass
 
-    # def testFileDelete(self):
-    #     # TODO
-    #     pass
-
-    # def testCoverAdd(self):
-    #     # TODO
-    #     pass
-
-    def testCoverExists(self):
-        import database
+    def testCovers(self):
+        """Tests adding and deleting book covers."""
+        # TODO: make this test adding and deleting
         db = database.database()
         db.data = {
             "book1": {"hasCover": True},
@@ -124,11 +102,6 @@ class databaseTests(unittest.TestCase):
         self.assertFalse(db.coverExists("book2"))
         self.assertFalse(db.coverExists("book3"))
 
-    # def testCoverDelete(self):
-    #     # TODO
-    #     pass
-
-            
 
 class requestsTests(unittest.TestCase):
     host = "127.0.0.1"
@@ -136,11 +109,10 @@ class requestsTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
+        """Starts the server for the requests tests."""
         setUp(self)
-        print("Starting server for requestsTests")
-        import server
         self.server = server
-        self.server.db = server.database(self.tempDataDir + "reqestsTest")
+        self.server.db = server.database(self.tempDataDir)
         self.server.db.load()
         self.serverThread = multiprocessing.Process(
             target=lambda: self.server.booklist.run(host=self.host, port=self.port))
@@ -148,16 +120,18 @@ class requestsTests(unittest.TestCase):
 
     @classmethod
     def tearDownClass(self):
-        print("Stopping server for requestsTests")
+        """Stops the server."""
         self.serverThread.terminate()
         self.server.db.save()
         tearDown(self)
 
     def testIndex(self):
+        """Tests that the index is send without any errors."""
         r = requests.get(f"http://{self.host}:{self.port}/")
         self.assertEqual(r.status_code, 200)
 
     def testStatic(self):
+        """Checks that files are sent from the static directory properly."""
         for path in (
             "images/favicon.ico",
             "scripts/main.js",

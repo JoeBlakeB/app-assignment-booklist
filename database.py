@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 import sys
 import uuid
 
@@ -84,17 +85,9 @@ class database:
 
     def bookDelete(self, bookID):
         """Delete a book and its files"""
-        # Delete files
-        filesToDelete = self.data[bookID]["files"]
         bookPath = self.fullFilePath("books/" + bookID + "/")
-        if self.data[bookID]["hasCover"]:
-            filesToDelete += ["cover.png", "coverPreview.png"]
-        for file in filesToDelete:
-            os.remove(bookPath + file)
-        # Delete directory
         if os.path.exists(bookPath):
-            os.rmdir(bookPath)
-        # Delete from database
+            shutil.rmtree(bookPath)
         del self.data[bookID]
 
     # def bookSearch(self):

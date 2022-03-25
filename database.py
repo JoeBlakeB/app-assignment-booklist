@@ -90,9 +90,17 @@ class database:
             shutil.rmtree(bookPath)
         del self.data[bookID]
 
-    # def bookSearch(self):
-    #     # TODO: """"""
-    #     pass
+    def bookSearch(self, query):
+        """Returns a list of bookIDs for if the query is in the books data"""
+        queryList = query.lower().split()
+        results = []
+        for bookID in self.data:
+            for word in queryList:
+                if word in str(self.data[bookID]).lower():
+                    results.append(bookID)
+                    break
+
+        return results
     
     # def fileAdd(self):
     #     # TODO: """"""

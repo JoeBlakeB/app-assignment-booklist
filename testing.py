@@ -34,14 +34,14 @@ class databaseTests(unittest.TestCase):
         tearDown(self)
 
     def testSaveLoad(self):
-        """Tests saving and loading the database."""
+        """Test saving and loading the database."""
         dbDataShouldBe = {}
         for i in range(16):
             db = database.database(self.tempDataDir)
             db.load()
             self.assertEqual(db.data, dbDataShouldBe)
-            db.data[str(i)] = i ** i
-            dbDataShouldBe[str(i)] = i ** i
+            db.data[str(i)] = {"test": i ** i}
+            dbDataShouldBe[str(i)] = {"test": i ** i}
             db.save()
         os.remove(self.tempDataDir + "data.json")
         dbDataShouldBe.popitem()
@@ -51,7 +51,7 @@ class databaseTests(unittest.TestCase):
         db.save()
 
     def testBookAddEditDelete(self):
-        """Tests the database for adding, editing, and deleting books from the database."""
+        """Test the database for adding, editing, and deleting books from the database."""
         db = database.database(self.tempDataDir)
         db.load()
 
@@ -78,20 +78,26 @@ class databaseTests(unittest.TestCase):
         self.assertFalse(os.path.exists(bookFilePath))
 
     def testSearch(self):
-        """Tests the book search.
+        """Test the book search.
         
         only makes sure relavant books are found and irrelevant books arent found
         does not test the order of books or how relevant the found books are"""
-        # TODO
-        pass
+        db = database.database(self.tempDataDir)
+        db.data = {}
+        bookIDs = []
+        bookIDs.append(db.bookAdd({"name": "Harry Potter and the Philosophers Stone"}))
+        bookIDs.append(db.bookAdd({"name": "Nineteen Eighty-Four", "author": "George Orwell"}))
+        self.assertEqual(db.bookSearch("harry potter"), [bookIDs[0]])
+        self.assertEqual(db.bookSearch("orwell"), [bookIDs[1]])
+        self.assertEqual(db.bookSearch("big chungus"), [])
 
     def testFiles(self):
-        """Tests adding and deleting files."""
+        """Test adding and deleting files."""
         # TODO
         pass
 
     def testCovers(self):
-        """Tests adding and deleting book covers."""
+        """Test adding and deleting book covers."""
         # TODO: make this test adding and deleting
         db = database.database()
         db.data = {
@@ -109,7 +115,7 @@ class requestsTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        """Starts the server for the requests tests."""
+        """Start the server for the requests tests."""
         setUp(self)
         self.server = server
         self.server.db = server.database(self.tempDataDir)
@@ -120,18 +126,18 @@ class requestsTests(unittest.TestCase):
 
     @classmethod
     def tearDownClass(self):
-        """Stops the server."""
+        """Stop the server."""
         self.serverThread.terminate()
         self.server.db.save()
         tearDown(self)
 
     def testIndex(self):
-        """Tests that the index is send without any errors."""
+        """Test that the index is send without any errors."""
         r = requests.get(f"http://{self.host}:{self.port}/")
         self.assertEqual(r.status_code, 200)
 
     def testStatic(self):
-        """Checks that files are sent from the static directory properly."""
+        """Check that files are sent from the static directory properly."""
         for path in (
             "images/favicon.ico",
             "scripts/main.js",

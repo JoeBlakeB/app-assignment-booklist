@@ -14,6 +14,8 @@
     --button-color: #fff;
     --border-color: #707d8a;
     --text-color: #232629;
+    --form-background: #232629;
+    --form-border: #232629;
     --selected-book: #3daee9;
     --icon-filter: brightness(100%) contrast(130%) invert(95%);
 }
@@ -31,6 +33,8 @@
     --button-color: #444;
     --border-color: #aaa;
     --text-color: #000;
+    --form-background: #ddd;
+    --form-border: #adadad;
     --selected-book: #656565;
     --icon-filter: none;
 }
@@ -45,6 +49,8 @@
     --button-color: #ccc;
     --border-color: #666;
     --text-color: #fff;
+    --form-background: #303030;
+    --form-border: #4d4d4d;
     --selected-book: #656565;
     --icon-filter: brightness(130%) contrast(120%) invert(8%);
 }
@@ -59,6 +65,8 @@
     --button-color: #d8dee9;
     --border-color: #d8dee9;
     --text-color: #d8dee9;
+    --form-background: #3c4454;
+    --form-border: #666a73;
     --selected-book: #90bcba;
     --icon-filter: brightness(120%) contrast(100%) invert(0%);
 }
@@ -73,6 +81,8 @@
     --button-color: #d1d2d6;
     --border-color: #9ca4c2;
     --text-color: #eff0f1;
+    --form-background: #363650;
+    --form-border: #242452;
     --selected-book: #3d62f9;
     --icon-filter: brightness(120%);
 }

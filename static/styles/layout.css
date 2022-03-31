@@ -68,7 +68,8 @@ button {
     bottom: 4%;
 }
 
-#backButton svg {
+#backButton svg,
+#saveButton svg {
     position: relative;
     top: 5%;
 }
@@ -196,11 +197,23 @@ table#bookList .Cover img {
 /* Text Style */
 h1 {
     font-size: 36pt;
-    margin: 0px 12px;
+    margin: 0px 12px 16px 12px;
     float: left;
 }
 
-h2 {
+h2, form {
     margin: 8px;
     clear: left;
+}
+
+/* Book edit form */
+form input {
+    background-color: var(--form-background);
+    width: 100%;
+    padding: 10px 16px;
+    margin: 4px 0;
+    display: inline-block;
+    border: 2px solid var(--form-border);
+    border-radius: 6px;
+    box-sizing: border-box;
 }

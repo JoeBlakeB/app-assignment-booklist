@@ -3,6 +3,7 @@
 import flask
 import os
 import sys
+import time
 
 from database import database
 
@@ -55,27 +56,92 @@ def bookCover(bookID, size):
     return flask.send_file(f"static/images/bookCoverPlaceholder{size}.png"), 404
 
 
-# @booklist.route("/api/new", methods=["POST"])
-# def apiNew():
-#     # TODO: """"""
-#     pass
+@booklist.route("/api/get/<bookID>")
+def apiGet(bookID):
+    """Respond with the full data of a book"""
+    book = db.bookGet(bookID)
+    if book:
+        return flask.jsonify(book)
+    else:
+        return {}, 404
 
 
-# @booklist.route("/api/update/<bookID>", methods=["PUT"])
-# def apiUpdate(bookID):
-#     # TODO: """"""
-#     pass
+@booklist.route("/api/new" , methods=["POST"])
+def apiNew():
+    """Create a new book and send back the books data"""
+    # Invalid request data
+    if flask.request.json == None or flask.request.json == {}:
+        return {"Success": False}, 422
+    # Add to database
+    bookID = db.bookAdd(flask.request.json)
+    # Book not added
+    if not bookID:
+        return {"Success": False}, 422
+    # Book added, respond with new books ID
+    else:
+        return {"Success": True, "bookID": bookID}
 
-# @booklist.route("/api/delete/<bookID>")
-# def apiDelete(bookID):
-#     # TODO: """"""
-#     pass
+
+@booklist.route("/api/edit/<bookID>", methods=["PUT"])
+def apiUpdate(bookID):
+    """Update a books metadata"""
+    if flask.request.json == None or flask.request.json == {}:
+        return flask.abort(422)
+    # Only edit book if it exists
+    if db.bookGet(bookID):
+        db.bookEdit(bookID, flask.request.json)
+        return {"Success": True}
+    else:
+        return {"Success": False}, 422
 
 
-# @booklist.route("/api/search/<query>")
-# def apiSearch(bookID):
-#     # TODO: """"""
-#     pass
+@booklist.route("/api/delete/<bookID>", methods=["DELETE"])
+def apiDelete(bookID):
+    """Delete a book"""
+    # If the book does not exists, return 404
+    if not db.bookGet(bookID):
+        return {"Deleted": False}, 404
+    db.bookDelete(bookID)
+    return {"Deleted": True}
+
+
+@booklist.route("/api/search")
+def apiSearch():
+    """Search for books based on a query
+    
+    URL Parameters:
+    q = string, search query, default ""
+    offset = int, books to skip, default 0
+    limit = int, amount of books to return, default 25, max 100"""
+    searchStartTime = time.time()
+    # Get parameters
+    query = flask.request.args.get("q")
+    if query == None:
+        bookIDs = list(db.data.keys())
+    else:
+        bookIDs = db.bookSearch(query)
+    offset = flask.request.args.get("offset", default=0, type=int)
+    limit = flask.request.args.get("limit", default=25, type=int)
+    if offset < 0:
+        offset = 0
+    if limit < 0 or offset > 100:
+        limit = 25
+
+    # Get book metadata
+    pageOfBookIDs = bookIDs[offset:offset+limit]
+    books = {}
+    for bookID in pageOfBookIDs:
+        books[bookID] = db.bookGet(bookID, search=True)
+    
+    # Return books and information about query
+    response = {
+        "time": int(((time.time() - searchStartTime) * 1000) + 1),
+        "first": offset,
+        "last":  offset + len(books),
+        "total": len(bookIDs),
+        "books": books
+    }
+    return response
 
 
 if __name__ == "__main__":

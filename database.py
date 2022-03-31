@@ -77,10 +77,20 @@ class database:
             if field in newData:
                 self.data[bookID][field] = newData[field]
 
-    def bookGet(self, bookID):
-        """Returns the book data if it exists, or False if it doesnt"""
+    def bookGet(self, bookID, search=False):
+        """Returns the book data if it exists, or False if it doesnt
+        
+        search=True to limit data returned"""
         if bookID in self.data:
-            return self.data[bookID]
+            book = self.data[bookID]
+            if not search:
+                return book
+            else:
+                return {
+                    "name": book["name"],
+                    "author": book["author"],
+                    "isbn": book["isbn"]
+                }
         return False
 
     def bookDelete(self, bookID):
@@ -94,7 +104,7 @@ class database:
         """Returns a list of bookIDs for if the query is in the books data"""
         queryList = query.lower().split()
         results = []
-        for bookID in self.data:
+        for bookID in self.data.keys():
             for word in queryList:
                 if word in str(self.data[bookID]).lower():
                     results.append(bookID)

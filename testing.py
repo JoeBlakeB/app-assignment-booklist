@@ -1,13 +1,26 @@
 #!/usr/bin/env python3
 
+import json
 import multiprocessing
 import os
 import shutil
 import unittest
+import random
 import requests
 
 import database
 import server
+
+
+testData = [
+    {"name": "Harry Potter and the Philosophers Stone"},
+    {"name": "Nineteen Eighty-Four", "author": "George Orwell"}
+]
+
+bookDefaults = {
+    "name": "", "author": "", "series": "", "isbn": "", "releaseDate": "",
+    "publisher": "", "language": "", "files": [], "hasCover": False
+}
 
 
 def setUp(self):
@@ -56,10 +69,8 @@ class databaseTests(unittest.TestCase):
         db.load()
 
         # Add book
-        book = {"name": "Harry Potter and the Philosophers Stone"}
-        bookInDatabase = {**book, "author": "", "series": "", "isbn": "", "releaseDate": "",
-            "publisher": "", "language": "", "files": [], "hasCover": False}
-        bookID = db.bookAdd(book)
+        bookInDatabase = {**bookDefaults, **testData[0]}
+        bookID = db.bookAdd(testData[0])
         self.assertEqual(db.bookGet(bookID), bookInDatabase)
         
         # Edit book
@@ -85,8 +96,8 @@ class databaseTests(unittest.TestCase):
         db = database.database(self.tempDataDir)
         db.data = {}
         bookIDs = []
-        bookIDs.append(db.bookAdd({"name": "Harry Potter and the Philosophers Stone"}))
-        bookIDs.append(db.bookAdd({"name": "Nineteen Eighty-Four", "author": "George Orwell"}))
+        bookIDs.append(db.bookAdd(testData[0]))
+        bookIDs.append(db.bookAdd(testData[1]))
         self.assertEqual(db.bookSearch("harry potter"), [bookIDs[0]])
         self.assertEqual(db.bookSearch("orwell"), [bookIDs[1]])
         self.assertEqual(db.bookSearch("big chungus"), [])
@@ -112,28 +123,28 @@ class databaseTests(unittest.TestCase):
 class requestsTests(unittest.TestCase):
     host = "127.0.0.1"
     port = 8080
+    baseUrl = f"http://{host}:{port}"
 
     @classmethod
     def setUpClass(self):
         """Start the server for the requests tests."""
         setUp(self)
-        self.server = server
-        self.server.db = server.database(self.tempDataDir)
-        self.server.db.load()
+        self.booklist = server.booklist
+        server.db = database.database(self.tempDataDir)
+        server.db.data = multiprocessing.Manager().dict()
         self.serverThread = multiprocessing.Process(
-            target=lambda: self.server.booklist.run(host=self.host, port=self.port))
+            target=lambda: self.booklist.run(host=self.host, port=self.port))
         self.serverThread.start()
 
     @classmethod
     def tearDownClass(self):
         """Stop the server."""
         self.serverThread.terminate()
-        self.server.db.save()
         tearDown(self)
 
     def testIndex(self):
         """Test that the index is send without any errors."""
-        r = requests.get(f"http://{self.host}:{self.port}/")
+        r = requests.get(self.baseUrl)
         self.assertEqual(r.status_code, 200)
 
     def testStatic(self):
@@ -143,11 +154,81 @@ class requestsTests(unittest.TestCase):
             "scripts/main.js",
             "styles/layout.css"
         ):
-            r = requests.get(f"http://{self.host}:{self.port}/static/{path}")
+            r = requests.get(f"{self.baseUrl}/static/{path}")
             self.assertEqual(r.status_code, 200)
             file = open("static/" + path, "rb")
             self.assertEqual(r.content, file.read())
             file.close()
+
+    def testGetBook(self):
+        """Tests getting books from the server"""
+        bookID = server.db.bookAdd(testData[0])
+        r1 = requests.get(f"{self.baseUrl}/api/get/{bookID}")
+        self.assertEqual(r1.status_code, 200)
+        self.assertEqual(r1.headers['content-type'], "application/json")
+        self.assertEqual(json.loads(r1.content), server.db.bookGet(bookID))
+        r2 = requests.get(f"{self.baseUrl}/api/get/0")
+        server.db.bookDelete(bookID)
+        r3 = requests.get(f"{self.baseUrl}/api/get/{bookID}")
+        self.assertEqual(r2.status_code, 404)
+        self.assertEqual(r3.status_code, 404)
+    
+    def testAddBook(self):
+        """Tests adding a book to the server"""
+        for book in testData:
+            r = requests.post(f"{self.baseUrl}/api/new", json=book)
+            self.assertEqual(r.status_code, 200)
+            bookID = json.loads(r.content)["bookID"]
+            self.assertEqual(
+                server.db.bookGet(bookID), 
+                {**bookDefaults, **book})
+        emptyBook = requests.post(f"{self.baseUrl}/api/new", json={})
+        self.assertEqual(emptyBook.status_code, 422)
+        invalidBook = requests.post(f"{self.baseUrl}/api/new", data=b"Harry Potter")
+        self.assertEqual(invalidBook.status_code, 422)
+
+    def testEditBook(self):
+        """Tests editing a book on the server"""
+        for book in testData:
+            bookID = server.db.bookAdd(book)
+            isbn = str(random.randint(0,999999999))
+            r = requests.put(f"{self.baseUrl}/api/edit/{bookID}", json={"isbn": isbn})
+            self.assertEqual(r.status_code, 200)
+            self.assertEqual(json.loads(r.content), {"Success": True})
+            self.assertEqual(
+                server.db.bookGet(bookID), 
+                {"isbn": isbn, **bookDefaults, **book})
+
+    def testDeleteBook(self):
+        """Tests deleting a book from the server"""
+        for book in testData:
+            bookID = server.db.bookAdd(book)
+            r = requests.delete(f"{self.baseUrl}/api/delete/{bookID}")
+            self.assertEqual(r.status_code, 200)
+            self.assertEqual(json.loads(r.content), {"Deleted": True})
+            self.assertFalse(server.db.bookGet(bookID))
+
+    def testSearchBook1(self):
+        """Tests searching for books via the server without a query"""
+        r = requests.get(f"{self.baseUrl}/api/search")
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(
+            list(json.loads(r.content)["books"].keys()).sort(), 
+            list(server.db.data.keys()).sort())
+
+    def testSearchBook2(self):
+        """Tests searching for books via the server with a query
+        
+        Only checks the IDs of the books and not any of the data
+        Assumes database.bookSearch works correctly"""
+        for book in testData:
+            server.db.bookAdd(book)
+        for query in ["harry potter", "orwell", "big chungus"]:
+            r = requests.get(f"{self.baseUrl}/api/search?q={query}")
+            self.assertEqual(r.status_code, 200)
+            self.assertEqual(
+                list(json.loads(r.content)["books"]).sort(),
+                server.db.bookSearch(query).sort())
 
 
 if __name__ == "__main__":

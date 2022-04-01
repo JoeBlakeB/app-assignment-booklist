@@ -180,7 +180,7 @@ if __name__ == "__main__":
 
     # Run server
     if useWaitress:
-        waitress.serve(booklist, host=host, port=port)
+        waitress.serve(booklist, host=host, port=port, threads=8)
     else:
         booklist.run(host=host, port=port)
 

@@ -7,7 +7,7 @@ import uuid
 
 class database:
     dataFilename = "data.json"
-    bookFields = ("name", "author", "series", "isbn", "releaseDate", "publisher", "language")
+    bookFields = ("title", "author", "series", "isbn", "releaseDate", "publisher", "language")
     
     fullFilePath = lambda self, filename : os.path.join(self.dataDir, filename)
 
@@ -52,8 +52,8 @@ class database:
 
     def bookAdd(self, bookData):
         """Takes a dict with book data and returns the new book ID"""
-        # If book doesnt have a name, dont add to database
-        if not "name" in bookData:
+        # If book doesnt have a title, dont add to database
+        if not bookData.get("title"):
             return False
         
         # Generate book dict with all fields
@@ -87,7 +87,7 @@ class database:
                 return book
             else:
                 return {
-                    "name": book["name"],
+                    "title": book["title"],
                     "author": book["author"],
                     "isbn": book["isbn"]
                 }

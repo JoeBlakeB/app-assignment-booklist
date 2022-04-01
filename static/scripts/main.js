@@ -1,21 +1,25 @@
 "use strict";
 
 var currentPage = "none";
-
 var currentBook = api.emptyBook;
+var currentBookID = 0;
 
 // Will return if the page is already open
 // If the page is edit or new book, will ask user to confirm
 // before changing page
 // Will then run the corresponding function for the page
-// param    page    the page that should be opened
-// param    isbn    the book to open (optional, 0 if not a book)
-function openPage(page, isbn=0) {
+//
+// Parameters:
+// page        the page that should be opened
+// bookID      the book to open (optional, 0 if not a book)
+// showWarning show a warning if leaving page new or edit (optional, true by default)
+function openPage(page, bookID=0, showWarning=true) {
     if (page == currentPage) { return }
-    if (currentPage == "new" || currentPage == "edit") {
+    if ((currentPage == "new" || currentPage == "edit") && showWarning) {
         if (!confirm ("Are you sure you want to leave without saving?")) { return }
     }
     currentPage = page;
+    currentBookID = bookID;
     showDetailsContainer(page != "none");
     switch (page) {
         case "none":

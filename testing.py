@@ -13,12 +13,12 @@ import server
 
 
 testData = [
-    {"name": "Harry Potter and the Philosophers Stone"},
-    {"name": "Nineteen Eighty-Four", "author": "George Orwell"}
+    {"title": "Harry Potter and the Philosophers Stone"},
+    {"title": "Nineteen Eighty-Four", "author": "George Orwell"}
 ]
 
 bookDefaults = {
-    "name": "", "author": "", "series": "", "isbn": "", "releaseDate": "",
+    "title": "", "author": "", "series": "", "isbn": "", "releaseDate": "",
     "publisher": "", "language": "", "files": [], "hasCover": False
 }
 

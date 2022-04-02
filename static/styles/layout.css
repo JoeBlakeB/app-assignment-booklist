@@ -125,6 +125,9 @@ button:active {
     float: right;
     background: none;
     border: none;
+    position: relative;
+    bottom: 48px;
+    left: 6px;
 }
 
 /* Book List Table */
@@ -148,6 +151,14 @@ table#bookList th {
     top: 0;
 }
 
+table#bookList p {
+    margin: 0 4px 0 4px;
+}
+
+table#bookList th.Cover p {
+    display: none;
+}
+
 table#bookList td.Cover {
     padding: 0;
     width: 0;
@@ -161,6 +172,16 @@ table#bookList .Cover img {
     width: 60px;
     height: 80px;
     display: block;
+}
+
+.selectedBook {
+    background-color: var(--selected-book);
+}
+
+/* Book List Footer */
+
+#searchInfo {
+    text-align: center;
 }
 
 /* Settings page layout */
@@ -180,6 +201,8 @@ table#bookList .Cover img {
 
 .layoutExample button {
     width: 70px;
+    position: relative;
+    bottom: 2px;
 }
 
 .setLayoutButton {
@@ -212,7 +235,7 @@ h1 {
     float: left;
 }
 
-h2, h3, h4, form {
+h2, h3:not(.layoutExample h3), h4, form {
     margin: 8px;
     clear: left;
 }

@@ -116,8 +116,8 @@ def apiSearch():
     searchStartTime = time.time()
     # Get parameters
     query = flask.request.args.get("q")
-    if query == None:
-        bookIDs = list(db.data.keys())
+    if query == None or query == "":
+        bookIDs = list(db.data.keys())[::-1]
     else:
         bookIDs = db.bookSearch(query)
     offset = flask.request.args.get("offset", default=0, type=int)
@@ -129,14 +129,14 @@ def apiSearch():
 
     # Get book metadata
     pageOfBookIDs = bookIDs[offset:offset+limit]
-    books = {}
+    books = []
     for bookID in pageOfBookIDs:
-        books[bookID] = db.bookGet(bookID, search=True)
+        books.append({"bookID": bookID, **db.bookGet(bookID, search=True)})
     
     # Return books and information about query
     response = {
         "time": int(((time.time() - searchStartTime) * 1000) + 1),
-        "first": offset,
+        "first": offset + 1,
         "last":  offset + len(books),
         "total": len(bookIDs),
         "books": books

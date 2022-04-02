@@ -208,12 +208,19 @@ class requestsTests(unittest.TestCase):
             self.assertEqual(json.loads(r.content), {"Deleted": True})
             self.assertFalse(server.db.bookGet(bookID))
 
+    def getBookIDList(self, response):
+        """Used by both search tests to get a list of bookIDs from the response"""
+        bookIDs = []
+        for book in response["books"]:
+            bookIDs.append(book["bookID"])
+        return bookIDs.sort()
+
     def testSearchBook1(self):
         """Tests searching for books via the server without a query"""
         r = requests.get(f"{self.baseUrl}/api/search")
         self.assertEqual(r.status_code, 200)
         self.assertEqual(
-            list(json.loads(r.content)["books"].keys()).sort(), 
+            self.getBookIDList(json.loads(r.content)),
             list(server.db.data.keys()).sort())
 
     def testSearchBook2(self):
@@ -227,7 +234,7 @@ class requestsTests(unittest.TestCase):
             r = requests.get(f"{self.baseUrl}/api/search?q={query}")
             self.assertEqual(r.status_code, 200)
             self.assertEqual(
-                list(json.loads(r.content)["books"]).sort(),
+                self.getBookIDList(json.loads(r.content)),
                 server.db.bookSearch(query).sort())
 
 

@@ -35,7 +35,7 @@
     --text-color: #000;
     --form-background: #ddd;
     --form-border: #adadad;
-    --selected-book: #656565;
+    --selected-book: #acacac;
     --icon-filter: none;
 }
 
@@ -51,7 +51,7 @@
     --text-color: #fff;
     --form-background: #303030;
     --form-border: #4d4d4d;
-    --selected-book: #656565;
+    --selected-book: #353535;
     --icon-filter: brightness(130%) contrast(120%) invert(8%);
 }
 
@@ -67,7 +67,7 @@
     --text-color: #d8dee9;
     --form-background: #3c4454;
     --form-border: #666a73;
-    --selected-book: #90bcba;
+    --selected-book: #5d737c;
     --icon-filter: brightness(120%) contrast(100%) invert(0%);
 }
 
@@ -83,6 +83,6 @@
     --text-color: #eff0f1;
     --form-background: #363650;
     --form-border: #242452;
-    --selected-book: #3d62f9;
+    --selected-book: #2c2c52;
     --icon-filter: brightness(120%);
 }

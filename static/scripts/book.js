@@ -49,7 +49,7 @@ const bookPages = {
         api.get(bookID);
     },
     // Show the book to the user
-    viewBookShow: function (book, status) {
+    viewBookShow: function (book) {
         api.currentBook = book;
         let bookHTML = "";
         // Generate HTML of information
@@ -63,7 +63,7 @@ const bookPages = {
             buttonsHTML.backSvg() + buttonsHTML.editSvg("openPage(\"edit\", \"" + api.currentBookID + "\")") + buttonsHTML.deleteSvg("api.delete()") +
             "<h1>View Book</h1>" + this.statusText + bookHTML;
     }
-}
+};
 
 // API related functions
 const api = {
@@ -98,7 +98,7 @@ const api = {
             return;
         }
 
-        // Tell user that book is being uplaoded
+        // Tell user that book is being uploaded
         status.style = "";
         status.innerText = uploadStatusMessage;
 
@@ -110,45 +110,22 @@ const api = {
         }
 
         // Upload book to the server
-        let req = new XMLHttpRequest();
-        req.onreadystatechange = function () {
-            if (req.readyState == 4) {
-                // Upload successful
-                if (req.status == 200) {
-                    let response = JSON.parse(req.responseText);
-                    // Get book ID if new book
-                    if (api.currentBookID == 0) {
-                        api.currentBookID = response.bookID;
-                    }
-                    // Open book
-                    openPage("view", api.currentBookID, false);
-                }
-                // Upload failed, tell user
-                else {
-                    api.errorMessage(req, status, "upload", book);
-                }
+        this.request(method, url, "upload", function (req) {
+            let response = JSON.parse(req.responseText);
+            // Get book ID if new book
+            if (api.currentBookID == 0) {
+                api.currentBookID = response.bookID;
             }
-        };
-        req.open(method, url);
-        req.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-        req.send(JSON.stringify(book));
+            // Open book
+            openPage("view", api.currentBookID, false);
+            search.search(false);
+        }, book);
     },
     // Get book data then call bookPages.viewBookShow
     get: function (bookID) {
-        let req = new XMLHttpRequest();
-        req.onreadystatechange = function () {
-            if (req.readyState == 4) {
-                if (req.status == 200) {
-                    bookPages.viewBookShow(JSON.parse(req.responseText), req.status);
-                }
-                else {
-                    let status = document.getElementById("statusText");
-                    api.errorMessage(req, status, "get");
-                }
-            }
-        };
-        req.open("GET", "/api/get/" + bookID);
-        req.send();
+        this.request("GET", "api/get/" + bookID, "get", function (req) {
+            bookPages.viewBookShow(JSON.parse(req.responseText));
+        });
     },
     // Delete a book then close the page
     delete: function () {
@@ -163,35 +140,134 @@ const api = {
             status.style = "";
             status.innerText = delStatusMessage;
 
-            let req = new XMLHttpRequest();
-            req.onreadystatechange = function () {
-                if (req.readyState == 4) {
-                    // Delete successful, close page
-                    if (req.status == 200) {
-                        openPage("none");
-                    }
-                    else {
-                        api.errorMessage(req, status, "delete");
-                    }
-                }
-            };
-            req.open("DELETE", "/api/delete/" + this.currentBookID);
-            req.send();
+            this.request("DELETE", "api/delete/" + this.currentBookID, "delete", function () {
+                openPage("none");
+                search.search(false);
+            });
         }
     },
-    errorMessage: function (req, element, action, book=this.emptyBook) {
-        element.style = "color: red;";
-        if (action == "upload" && book.title == "") {
-            element.innerText = "You must enter a book title."
-        }
-        else if (req.status == 404) {
-            element.innerText = "Error 404: Book not found.";
-        }
-        else if (req.status == 0) {
-            element.innerText = "Error: Could not connect to the server.";
+    // XMLHttpRequest for get, upload, and delete
+    request: function (method, url, action, onSuccess, data=null) {
+        let req = new XMLHttpRequest();
+        req.onreadystatechange = function () {
+            if (req.readyState == 4) {
+                if (req.status == 200) {
+                    onSuccess(req);
+                }
+                else {
+                    api.errorMessage(req, action, data);
+                }
+            }
+        };
+        req.open(method, url);
+        // Only sent json if there is data to send.
+        if (data == null) {
+            req.send();
         }
         else {
-            element.innerText = "Error" + req.status + ": " + req.statusText;
+            req.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+            req.send(JSON.stringify(data));
+        }
+    },
+    // User understandable error messages
+    errorMessage: function (req, action, book={}) {
+        if (action == "search") {
+            var status = document.getElementById("bookListStatusText");
+        }
+        else {
+            var status = document.getElementById("statusText");
+        }
+        status.style = "color: red;";
+        if (action == "upload" && book.title == "") {
+            status.innerText = "You must enter a book title.";
+        }
+        else if (req.status == 404) {
+            status.innerText = "Error 404: Book not found.";
+        }
+        else if (req.status == 0) {
+            status.innerText = "Error: Could not connect to the server.";
+        }
+        else {
+            status.innerText = "Error " + req.status + ": " + req.statusText;
         }
     }
-}
+};
+
+// Search related functions
+const search = {
+    // Search button or DOMContentLoaded
+    search: function (tellUser=true) {
+        if (tellUser) {
+            document.getElementById("bookList").innerHTML = "<h3 id='bookListStatusText'>Loading books...</h3>";
+        }
+        let query = document.getElementById("controlsSearchText").value;
+        api.request("GET", "api/search?q=" + query, "search", function (req) {
+            search.showResults(JSON.parse(req.responseText));
+        });
+    },
+    headerFields: ["Cover", "Title", "Author"],
+    tableCell: function (field, text="", tagName="td") {
+        let cell = document.createElement(tagName);
+        cell.className = field;
+        let p = document.createElement("p");
+        p.innerText = text;
+        cell.appendChild(p);
+        return cell;
+    },
+    // Called by api.search, generate the HTML for the search results
+    showResults: function (response) {
+        let fragment = document.createDocumentFragment();
+        // Generate table
+        let table = document.createElement("table");
+        table.id = "bookList";
+        let tableHeader = document.createElement("tr");
+        for (let field of this.headerFields) {
+            tableHeader.appendChild(this.tableCell(field, field, "th"));
+        }
+        table.appendChild(tableHeader);
+        for (let book of response.books) {
+            let row = document.createElement("tr");
+            row.onclick = this.bookSelected;
+            row.id = book.bookID;
+
+            let img = this.tableCell("Cover");
+            img.innerHTML = "<img src = /book/cover/" + book.bookID + "/preview>";
+            row.appendChild(img);
+
+            for (let field of this.headerFields.slice(1)) {
+                row.appendChild(this.tableCell(field, book[field.toLowerCase()]));
+            }
+            table.appendChild(row);
+        }
+        fragment.appendChild(table);
+
+        // Information about search
+        let info = document.createElement("p");
+        info.id = "searchInfo";
+        info.innerText = "Showing ";
+        let length = Object.keys(response.books).length;
+        if (length < response.total) {
+            info.innerText += response.first + " to " + response.last + " of ";
+        }
+        info.innerText += response.total + " books (" + response.time + "ms)";
+        fragment.appendChild(info);
+
+        document.getElementById("listContainer").replaceChildren(fragment);
+        editClassifExists(api.currentBookID, "selectedBook");
+    },
+    // Open a book when it is selected, do nothing if already open
+    bookSelected: function (event) {
+        if (document.getElementById(this.id).className == "") {
+            openPage("view", this.id);
+        }
+    }
+};
+
+// Empty search on page load
+document.addEventListener("DOMContentLoaded", search.search());
+
+document.getElementById("controlsSearchText").addEventListener("keyup", function (event) {
+    if (event.key === "Enter") {
+        search.search();
+    }
+});

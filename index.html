@@ -7,8 +7,6 @@
         <link href="/static/styles/layout.css" rel="stylesheet" type="text/css" />
         <link href="/static/styles/colorScheme.css" rel="stylesheet" type="text/css" />
         <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
-        <script src="/static/scripts/main.js"></script>
-        <script src="/static/scripts/book.js"></script>
     </head>
     <body class="{{ bodyClasses }}">
         <div class="layoutContainer" id="controlsBooklistContainer">
@@ -20,7 +18,7 @@
                 </button>
                 <div id="controlsSearchContainer">
                     <input type="text" placeholder="Search.." name="controlsSearch" id="controlsSearchText">
-                    <button type="submit" id="controlsSearchSubmit" class="controlsButton">
+                    <button type="submit" id="controlsSearchSubmit" class="controlsButton" onclick="search.search();">
                         <svg width="48" height="48" alt="search">
                             <path d="M 26 14 A 8 8 0 0 0 18 22 A 8 8 0 0 0 19.382812 26.496094 L 14.439453 31.439453 A 1.50015 1.50015 0 1 0 16.560547 33.560547 L 21.509766 28.611328 A 8 8 0 0 0 26 30 A 8 8 0 0 0 34 22 A 8 8 0 0 0 26 14 z M 26 17 A 5 5 0 0 1 31 22 A 5 5 0 0 1 26 27 A 5 5 0 0 1 21 22 A 5 5 0 0 1 26 17 z" />
                         </svg>
@@ -34,31 +32,17 @@
                 </button>
             </div>
             <div id="listContainer" class="subContainer">
+                <noscript>
+                    <h3>You must enable JavaScript to use this website.</h3>
+                </noscript>
                 <table id="bookList">
-                    <tr>
-                        <th class="Cover"></th>
-                        <th class="Title">Title</th>
-                        <th class="Author">Author</th>
-                        <th class="ISBN">ISBN</th>
-                    </tr>
-                    <tr>
-                        <td class="Cover"><img src="/book/cover/0/preview" /></td>
-                        <td class="Title">Nineteen Eighty-Mung</td>
-                        <td class="Author">George Suswell</td>
-                        <td class="ISBN">9780141393049</td>
-                    </tr>
-                    <tr>
-                        <td class="Cover"><img src="/book/cover/0/preview" /></td>
-                        <td class="Title">Harry Potter and the Sussy Stone</td>
-                        <td class="Author">J.K. Munging</td>
-                        <td class="ISBN">9780747532743</td>
-                    </tr>
                 </table>
             </div>
         </div>
         <div class="layoutContainer" id="detailsMainContainer">
-            <div id="detailsContainer" class="subContainer">
-            </div>
+            <div id="detailsContainer" class="subContainer"></div>
         </div>
+        <script src="/static/scripts/main.js"></script>
+        <script src="/static/scripts/book.js"></script>
     </body>
 </html>

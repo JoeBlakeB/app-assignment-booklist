@@ -1,6 +1,8 @@
 # APP Assignment Booklist
 
-Joe Baker's Application of Programming Principles Assignment
+Joe Baker's Application of Programming Principles Assignment.
+
+The code is currently closed source but I plan to make this project public after marking has finished.
 
 ## Usage
 
@@ -30,6 +32,6 @@ To stop the server send a KeyboardInterrupt (ctrl + C).
 
 ## Misc
 
-- Server tested with Python 3.10.2 on Linux
+- Server tested with Python 3.10.3 on Linux
 - Client tested with Firefox and Chrome on Linux
 - Button icon SVGs from [Papirus Icon Theme](https://github.com/PapirusDevelopmentTeam/papirus-icon-theme)

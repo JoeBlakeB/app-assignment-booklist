@@ -104,9 +104,9 @@ class database:
         """Returns a list of bookIDs for if the query is in the books data"""
         queryList = query.lower().split()
         results = []
-        for bookID in self.data.keys():
+        for bookID in list(self.data.keys())[::-1]:
             for word in queryList:
-                if word in str(self.data[bookID]).lower():
+                if word in str(list(self.data[bookID].values())[2:]).lower():
                     results.append(bookID)
                     break
 

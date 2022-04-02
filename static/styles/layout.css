@@ -74,6 +74,17 @@ button {
     top: 5%;
 }
 
+#editButton svg {
+    position: relative;
+    top: 20%;
+    left: 15%;
+}
+
+#deleteButton svg {
+    position: relative;
+    top: 3%;
+}
+
 .controlsButton svg {
     position: relative;
     fill: var(--button-color);
@@ -201,7 +212,7 @@ h1 {
     float: left;
 }
 
-h2, form {
+h2, h3, h4, form {
     margin: 8px;
     clear: left;
 }
@@ -216,4 +227,14 @@ form input {
     border: 2px solid var(--form-border);
     border-radius: 6px;
     box-sizing: border-box;
+}
+
+/* View Book page */
+
+h4.viewBook {
+    margin: 24px 0 0 8px;
+}
+
+h3.viewBook {
+    margin: 0 0 24px 8px;
 }

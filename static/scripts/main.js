@@ -1,8 +1,6 @@
 "use strict";
 
 var currentPage = "none";
-var currentBook = api.emptyBook;
-var currentBookID = 0;
 
 // Will return if the page is already open
 // If the page is edit or new book, will ask user to confirm
@@ -14,18 +12,22 @@ var currentBookID = 0;
 // bookID      the book to open (optional, 0 if not a book)
 // showWarning show a warning if leaving page new or edit (optional, true by default)
 function openPage(page, bookID=0, showWarning=true) {
-    if (page == currentPage) { return }
+    if (page == currentPage && page != "view") { return }
     if ((currentPage == "new" || currentPage == "edit") && showWarning) {
         if (!confirm ("Are you sure you want to leave without saving?")) { return }
     }
     currentPage = page;
-    currentBookID = bookID;
+    api.currentBookID = bookID;
     showDetailsContainer(page != "none");
     switch (page) {
         case "none":
             return document.getElementById("detailsContainer").innerHTML = "";
         case "settings":
             return settings.openSettingsPage();
+        case "view":
+            return bookPages.viewBookLoading(bookID);
+        case "edit":
+            return bookPages.edit();
         case "new":
             return bookPages.new();
         default:
@@ -51,16 +53,19 @@ function showDetailsContainer(addClass) {
 
 // HTML for buttons used in multiple different places
 const buttonsHTML = {
-    backSvg: "<button id='backButton' class='controlsButton' onclick='openPage(\"none\")'>\
-    <svg height='24' width='24' transform='scale(1.25)'>\
-    <path d='m 11.000024,4 c 0.554,0 1,0.446 1,1 V 9 H 20 c 0.554,0 1,0.446 1,1 v 3 c 0,0.554 -0.446,1 -1,1 h -7.999977 v 4 c 0,0.554 -0.445999,1 -1,1 -0.298584,0 -0.565122,-0.129747 -0.748046,-0.335938 L 3.273438,12.185547 C 3.104355,12.006452 3,11.76574 3,11.5 3,11.23426 3.104355,10.993548 3.273438,10.814453 L 10.251977,4.3359375 C 10.434902,4.129747 10.70144,4 11.000024,4 Z' />\
-    </svg></button>",
-    saveSvg: "<button id='saveButton' class='controlsButton' onclick=''>\
-    <svg height='24' width='24' transform='scale(1.75)'>\
-    <path d='m 18,19 c 0.55,0 1,-0.45 1,-1 V 7 L 17,5 H 6 C 5.45,5 5,5.45 5,6 v 12 c 0,0.55 0.45,1 1,1 z M 17,17 H 7 V 7 h 1 v 5 h 8 V 7 h 1 z M 12,11 H 10 V 7 h 2 z'/>\
-    </svg></button>"
+    backSvg: function (onclick="openPage(\"none\")") {
+        return "<button id='backButton' class='controlsButton' onclick='" + onclick + "'> <svg height='24' width='24' transform='scale(1.25)'> <path d='m 11.000024,4 c 0.554,0 1,0.446 1,1 V 9 H 20 c 0.554,0 1,0.446 1,1 v 3 c 0,0.554 -0.446,1 -1,1 h -7.999977 v 4 c 0,0.554 -0.445999,1 -1,1 -0.298584,0 -0.565122,-0.129747 -0.748046,-0.335938 L 3.273438,12.185547 C 3.104355,12.006452 3,11.76574 3,11.5 3,11.23426 3.104355,10.993548 3.273438,10.814453 L 10.251977,4.3359375 C 10.434902,4.129747 10.70144,4 11.000024,4 Z' /></svg></button>"
+    },
+    saveSvg: function (onclick) {
+        return "<button id='saveButton' class='controlsButton' onclick='" + onclick + "'> <svg height='24' width='24' transform='scale(1.75)'> <path d='m 18,19 c 0.55,0 1,-0.45 1,-1 V 7 L 17,5 H 6 C 5.45,5 5,5.45 5,6 v 12 c 0,0.55 0.45,1 1,1 z M 17,17 H 7 V 7 h 1 v 5 h 8 V 7 h 1 z M 12,11 H 10 V 7 h 2 z'/></svg></button>"
+    },
+    editSvg: function (onclick) {
+        return "<button id='editButton' class='controlsButton' onclick='" + onclick + "'> <svg height='24' width='24' transform='scale(1.6)'> <path d='M 12.778, 1.2222 C 12.778, 1.2222 12.278, 0.72224 11.778, 1.2222 L 10, 3 13, 6 14.778, 4.2222 C 15.278, 3.7222 14.778, 3.2222 14.778, 3.2222 Z M 9, 4 1, 12 V 15 H 4 L 12, 7 Z'/></svg></button>"
+    },
+    deleteSvg: function (onclick) {
+        return "<button id='deleteButton' class='controlsButton' onclick='" + onclick + "'> <svg height='24' width='24' transform='scale(1.5)'> <path d='M 10,4 C 9,4 9,5 9,5 H 6 C 6,5 5,5 5,6 V 7 H 19 V 6 C 19,5 18,5 18,5 H 15 C 15,5 15,4 14,4 Z M 6,8 V 19 C 6,19.52 6.48,20 7,20 H 17 C 17.52,20 18,19.52 18,19 V 8 Z'/></svg></button>"
+    }
 }
-
 
 // Functions for changing theme and layout in the settings page
 const settings = {
@@ -112,7 +117,7 @@ const settings = {
     // Generate the HTML for the settings page and add it to the detailsContainer div
     openSettingsPage: function () {
         var settingsHTML = "<div id='settingsContainer'>" +
-            buttonsHTML.backSvg +
+            buttonsHTML.backSvg() +
             "<h1>Settings</h1>\
             <h2>Layout</h2>\
             <button onclick='settings.setLayout(\"desktop\")' class='setLayoutButton'> <svg width='64' height='64' transform='scale(3.2)' alt='Desktop Layout'> <rect style='opacity:0.2' width='32' height='42' x='16' y='14' rx='2.5' ry='2.5' /> <rect style='fill:#8e8e8e' width='32' height='42' x='16' y='13' rx='2.5' ry='2.5' /> <rect style='opacity:0.2' width='52' height='40' x='6' y='10' rx='2.5' ry='2.5' /> <path style='fill:#595959' d='M 6 44 L 6 46.5 C 6 47.885 7.115 49 8.5 49 L 55.5 49 C 56.885 49 58 47.885 58 46.5 L 58 44 L 6 44 z' /> <path style='fill:#333333' d='M 8.5,9 C 7.115,9 6,10.115 6,11.5 V 44 H 58 V 11.5 C 58,10.115 56.885,9 55.5,9 Z' /> <rect style='opacity:0.1;fill:#ffffff' width='52' height='1' x='6' y='44' /> <path style='fill:#ffffff;opacity:0.1' d='M 8.5 9 C 7.115 9 6 10.115 6 11.5 L 6 12.5 C 6 11.115 7.115 10 8.5 10 L 55.5 10 C 56.885 10 58 11.115 58 12.5 L 58 11.5 C 58 10.115 56.885 9 55.5 9 L 8.5 9 z' /> </svg> </button> \

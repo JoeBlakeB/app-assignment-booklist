@@ -92,7 +92,7 @@ def apiUpdate(bookID):
         db.bookEdit(bookID, flask.request.json)
         return {"Success": True}
     else:
-        return {"Success": False}, 422
+        return {"Success": False}, 404
 
 
 @booklist.route("/api/delete/<bookID>", methods=["DELETE"])

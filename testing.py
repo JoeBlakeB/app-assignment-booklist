@@ -18,7 +18,7 @@ testData = [
 ]
 
 bookDefaults = {
-    "title": "", "author": "", "series": "", "isbn": "", "releaseDate": "",
+    "title": "", "author": "", "series": "", "genre": "", "isbn": "", "releaseDate": "",
     "publisher": "", "language": "", "files": [], "hasCover": False
 }
 

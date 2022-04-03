@@ -17,6 +17,7 @@
     --form-background: #232629;
     --form-border: #232629;
     --selected-book: #3daee9;
+    --page-selected: #3daee9;
     --icon-filter: brightness(100%) contrast(130%) invert(95%);
 }
 .breezeColorScheme input {
@@ -36,6 +37,7 @@
     --form-background: #ddd;
     --form-border: #adadad;
     --selected-book: #acacac;
+    --page-selected: #a1a1a1;
     --icon-filter: none;
 }
 
@@ -52,6 +54,7 @@
     --form-background: #303030;
     --form-border: #4d4d4d;
     --selected-book: #353535;
+    --page-selected: #707070;
     --icon-filter: brightness(130%) contrast(120%) invert(8%);
 }
 
@@ -68,6 +71,7 @@
     --form-background: #3c4454;
     --form-border: #666a73;
     --selected-book: #5d737c;
+    --page-selected: #5e899b;
     --icon-filter: brightness(120%) contrast(100%) invert(0%);
 }
 
@@ -84,5 +88,6 @@
     --form-background: #363650;
     --form-border: #242452;
     --selected-book: #2c2c52;
+    --page-selected: #5b5ba0;
     --icon-filter: brightness(120%);
 }

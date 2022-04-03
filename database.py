@@ -7,7 +7,7 @@ import uuid
 
 class database:
     dataFilename = "data.json"
-    bookFields = ("title", "author", "series", "isbn", "releaseDate", "publisher", "language")
+    bookFields = ("title", "author", "series", "isbn", "releaseDate", "publisher", "language", "genre")
     
     fullFilePath = lambda self, filename : os.path.join(self.dataDir, filename)
 
@@ -88,8 +88,7 @@ class database:
             else:
                 return {
                     "title": book["title"],
-                    "author": book["author"],
-                    "isbn": book["isbn"]
+                    "author": book["author"]
                 }
         return False
 

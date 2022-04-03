@@ -7,6 +7,7 @@ const bookPages = {
         ["Title", "title"],
         ["Author", "author"],
         ["Series", "series"],
+        ["Genre", "genre"],
         ["ISBN", "isbn"],
         ["Publisher", "publisher"],
         ["Language", "language"],
@@ -54,7 +55,7 @@ const bookPages = {
         let bookHTML = "";
         // Generate HTML of information
         for (let field of this.bookFields) {
-            if (book[field[1]].length != 0) {
+            if (book[field[1]] != "" && book[field[1]]) {
                 bookHTML += "<h4 class='viewBook'>" + field[0] + ":</h4><h3 class='viewBook'>" + book[field[1]] + "</h3>";
             }
         } 
@@ -72,6 +73,7 @@ const api = {
         "title": "",
         "author": "",
         "series": "",
+        "genre": "",
         "isbn": "",
         "releaseDate": "",
         "publisher": "",
@@ -118,7 +120,7 @@ const api = {
             }
             // Open book
             openPage("view", api.currentBookID, false);
-            search.search(false);
+            search.search(search.currentPage, false);
         }, book);
     },
     // Get book data then call bookPages.viewBookShow
@@ -142,7 +144,7 @@ const api = {
 
             this.request("DELETE", "api/delete/" + this.currentBookID, "delete", function () {
                 openPage("none");
-                search.search(false);
+                search.search(search.currentPage, false);
             });
         }
     },
@@ -172,7 +174,9 @@ const api = {
     // User understandable error messages
     errorMessage: function (req, action, book={}) {
         if (action == "search") {
-            var status = document.getElementById("bookListStatusText");
+            let bookList = document.getElementById("listContainer");
+            bookList.innerHTML = "<h3 id='bookListStatusText'>Loading books...</h3>";
+            var status = bookList.firstChild;
         }
         else {
             var status = document.getElementById("statusText");
@@ -195,13 +199,21 @@ const api = {
 
 // Search related functions
 const search = {
+    currentPage: 0,
+    lastPage: 1,
+    booksPerPage: 25,
     // Search button or DOMContentLoaded
-    search: function (tellUser=true) {
+    search: function (page=0, tellUser=true) {
         if (tellUser) {
-            document.getElementById("bookList").innerHTML = "<h3 id='bookListStatusText'>Loading books...</h3>";
+            document.getElementById("listContainer").innerHTML = "<h3 id='bookListStatusText'>Loading books...</h3>";
         }
+        if (typeof page === "object") {
+            page = 0
+        }
+        search.currentPage = page;
+        let offset = search.booksPerPage * page;
         let query = document.getElementById("controlsSearchText").value;
-        api.request("GET", "api/search?q=" + query, "search", function (req) {
+        api.request("GET", "api/search?q=" + query + "&limit=" + search.booksPerPage + "&offset=" + offset, "search", function (req) {
             search.showResults(JSON.parse(req.responseText));
         });
     },
@@ -244,27 +256,108 @@ const search = {
         // Information about search
         let info = document.createElement("p");
         info.id = "searchInfo";
-        info.innerText = "Showing ";
         let length = Object.keys(response.books).length;
-        if (length < response.total) {
-            info.innerText += response.first + " to " + response.last + " of ";
+        if (length > 0) {
+            info.innerText = "Showing ";
+            if (length < response.total) {
+                info.innerText += response.first + " to " + response.last + " of ";
+            }
+            info.innerText += response.total + " books"
         }
-        info.innerText += response.total + " books (" + response.time + "ms)";
+        else {
+            info.innerText = "Your search did not match any books."
+        }
+        info.innerText += " (" + response.time + "ms)";
         fragment.appendChild(info);
+
+        // Page selector
+        if (length < response.total) {
+            fragment.appendChild(this.pageSelector(response.total));
+        }
 
         document.getElementById("listContainer").replaceChildren(fragment);
         editClassifExists(api.currentBookID, "selectedBook");
     },
+    // Generate the page selector for the bottom of the book list
+    pageSelector: function (total) {
+        let menu = document.createElement("menu");
+        menu.id = "pageSelector";
+        let currentPage = this.currentPage + 1;
+        this.lastPage = Math.ceil(total / this.booksPerPage);
+        let pageButtons = 5;
+
+        menu.appendChild(this.pageButton("<"));
+        // Before current page
+        let start = 1;
+        let extraBefore = currentPage - (this.lastPage - pageButtons);
+        if (extraBefore < 0) { extraBefore = 0; }
+        if (currentPage > pageButtons + 1 + extraBefore) {
+            menu.appendChild(this.pageButton(1));
+            menu.appendChild(this.pageButton("···", false, "searchPageSeperator"));
+            start = currentPage - (pageButtons - 2 + extraBefore);
+        }
+        for (let i = start; i < currentPage && i < this.lastPage; i++) {
+            menu.appendChild(this.pageButton(i));
+        }
+        // Current page
+        menu.appendChild(this.pageButton(currentPage, true, "searchPageSelected"));
+        // After current page
+        let extraAfter = pageButtons + 1 - currentPage;
+        if (extraAfter < 0) { extraAfter = 0; }
+        if (this.lastPage - currentPage > pageButtons + extraAfter) {
+            for (let i = currentPage + 1; i <= currentPage + pageButtons - 2 + extraAfter; i++) {
+                menu.appendChild(this.pageButton(i));
+            }
+            menu.appendChild(this.pageButton("···", false, "searchPageSeperator"));
+            menu.appendChild(this.pageButton(this.lastPage));
+        }
+        else {
+            for (let i = currentPage + 1; i <= this.lastPage; i++) {
+                menu.appendChild(this.pageButton(i));
+            }
+        }
+        menu.appendChild(this.pageButton(">"));
+
+        return menu;
+    },
+    // Used to generate each button for the page selector menu
+    pageButton: function (pageNumber, clickable=true, className="searchPageOption") {
+        let li = document.createElement("li");
+        li.className = className;
+        if (clickable) {
+            li.onclick = search.pageButtonClicked;
+        }
+        let span = document.createElement("span");
+        span.innerText = pageNumber;
+        li.appendChild(span);
+        return li;
+    },
+    pageButtonClicked: function () {
+        let text = this.firstChild.innerText;
+        if (!Number.isNaN(Number(text))) {
+            search.search(Number(text) - 1, false);
+        }
+        else if (text == "<") {
+            let last = search.currentPage - 1;
+            if (last < 0) { last = 0; }
+            search.search(last, false);
+        }
+        else if (text == ">") {
+            let next = search.currentPage + 1;
+            if (next >= search.lastPage) { next = search.currentPage; }
+            search.search(next, false);
+        }
+    },
     // Open a book when it is selected, do nothing if already open
-    bookSelected: function (event) {
-        if (document.getElementById(this.id).className == "") {
+    bookSelected: function () {
+        if (this.className == "") {
             openPage("view", this.id);
         }
     }
 };
 
 // Empty search on page load
-document.addEventListener("DOMContentLoaded", search.search());
+document.addEventListener("DOMContentLoaded", search.search);
 
 document.getElementById("controlsSearchText").addEventListener("keyup", function (event) {
     if (event.key === "Enter") {

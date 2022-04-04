@@ -57,7 +57,7 @@ class database:
             return False
         
         # Generate book dict with all fields
-        newBook = {"files": [], "hasCover": False}
+        newBook = {}
         for field in self.bookFields:
             if field in bookData:
                 newBook[field] = bookData[field]
@@ -105,30 +105,7 @@ class database:
         results = []
         for bookID in list(self.data.keys())[::-1]:
             for word in queryList:
-                if word in str(list(self.data[bookID].values())[2:]).lower():
+                if word in str(list(self.data[bookID].values())).lower():
                     results.append(bookID)
                     break
-
         return results
-    
-    # def fileAdd(self):
-    #     # TODO: """"""
-    #     pass
-
-    # def fileDelete(self):
-    #     # TODO: """"""
-    #     pass
-
-    # def coverAdd(self):
-    #     # TODO: """"""
-    #     pass
-
-    def coverExists(self, bookID):
-        """Returns a bool for if a book has a cover"""
-        if bookID in self.data:
-            return self.data[bookID]["hasCover"]
-        return False
-
-    # def coverDelete(self):
-    #     # TODO: """"""
-    #     pass

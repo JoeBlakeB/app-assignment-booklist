@@ -19,7 +19,7 @@ testData = [
 
 bookDefaults = {
     "title": "", "author": "", "series": "", "genre": "", "isbn": "", "releaseDate": "",
-    "publisher": "", "language": "", "files": [], "hasCover": False
+    "publisher": "", "language": ""
 }
 
 
@@ -98,27 +98,10 @@ class databaseTests(unittest.TestCase):
         bookIDs = []
         bookIDs.append(db.bookAdd(testData[0]))
         bookIDs.append(db.bookAdd(testData[1]))
+        print(db.data)
         self.assertEqual(db.bookSearch("harry potter"), [bookIDs[0]])
         self.assertEqual(db.bookSearch("orwell"), [bookIDs[1]])
         self.assertEqual(db.bookSearch("big chungus"), [])
-
-    def testFiles(self):
-        """Test adding and deleting files."""
-        # TODO
-        pass
-
-    def testCovers(self):
-        """Test adding and deleting book covers."""
-        # TODO: make this test adding and deleting
-        db = database.database()
-        db.data = {
-            "book1": {"hasCover": True},
-            "book2": {"hasCover": False}
-        }
-        self.assertTrue(db.coverExists("book1"))
-        self.assertFalse(db.coverExists("book2"))
-        self.assertFalse(db.coverExists("book3"))
-
 
 class requestsTests(unittest.TestCase):
     host = "127.0.0.1"
@@ -183,9 +166,9 @@ class requestsTests(unittest.TestCase):
                 server.db.bookGet(bookID), 
                 {**bookDefaults, **book})
         emptyBook = requests.post(f"{self.baseUrl}/api/new", json={})
-        self.assertEqual(emptyBook.status_code, 422)
+        self.assertTrue(400 <= emptyBook.status_code <= 499)
         invalidBook = requests.post(f"{self.baseUrl}/api/new", data=b"Harry Potter")
-        self.assertEqual(invalidBook.status_code, 422)
+        self.assertTrue(400 <= invalidBook.status_code <= 499)
 
     def testEditBook(self):
         """Tests editing a book on the server"""

@@ -44,18 +44,6 @@ def sendStatic(path):
     return flask.send_from_directory("static", path)
 
 
-@booklist.route("/book/cover/<bookID>", defaults={"size": ""})
-@booklist.route("/book/cover/<bookID>/preview", defaults={"size": "Preview"})
-def bookCover(bookID, size):
-    """Sends the cover of a book"""
-    if db.coverExists(bookID):
-        coverFilename = db.fullFilePath(f"books/{bookID}/cover{size}.png")
-        if os.path.exists(coverFilename):
-            return flask.send_file(coverFilename)
-    # If book doesnt exist or if book doesnt have cover
-    return flask.send_file(f"static/images/bookCoverPlaceholder{size}.png"), 404
-
-
 @booklist.route("/api/get/<bookID>")
 def apiGet(bookID):
     """Respond with the full data of a book"""

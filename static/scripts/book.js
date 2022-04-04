@@ -77,9 +77,7 @@ const api = {
         "isbn": "",
         "releaseDate": "",
         "publisher": "",
-        "language": "",
-        "files": [],
-        "hasCover": false
+        "language": ""
     },
     // Current book being viewed
     currentBook: this.emptyBook,
@@ -217,7 +215,7 @@ const search = {
             search.showResults(JSON.parse(req.responseText));
         });
     },
-    headerFields: ["Cover", "Title", "Author"],
+    headerFields: ["Title", "Author"],
     tableCell: function (field, text="", tagName="td") {
         let cell = document.createElement(tagName);
         cell.className = field;
@@ -242,11 +240,7 @@ const search = {
             row.onclick = this.bookSelected;
             row.id = book.bookID;
 
-            let img = this.tableCell("Cover");
-            img.innerHTML = "<img src = /book/cover/" + book.bookID + "/preview>";
-            row.appendChild(img);
-
-            for (let field of this.headerFields.slice(1)) {
+            for (let field of this.headerFields) {
                 row.appendChild(this.tableCell(field, book[field.toLowerCase()]));
             }
             table.appendChild(row);

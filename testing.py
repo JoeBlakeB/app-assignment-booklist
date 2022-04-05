@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 
+import hashlib
 import json
 import multiprocessing
 import os
-import shutil
-import unittest
 import random
 import requests
+import shutil
+import unittest
 
 import database
 import server
-
 
 testData = [
     {"title": "Harry Potter and the Philosophers Stone"},
@@ -21,6 +21,25 @@ bookDefaults = {
     "title": "", "author": "", "series": "", "genre": "", "isbn": "", "releaseDate": "",
     "publisher": "", "language": "", "files": [], "hasCover": False
 }
+
+imagesBaseURL = "https://cdn.discordapp.com/attachments/796434329831604288"
+testImages = [
+    imagesBaseURL + "/960619212798296144/gernotMinecraft.jpeg",  # jpeg
+    imagesBaseURL + "/960619213486170153/replitMeme.png",        # png
+    imagesBaseURL + "/960619213779767307/BrunoFunkoPop.png"      # png with transparency
+]
+
+testFiles = {}
+
+
+def getFile(url):
+    """Get a file for testing from a URL, caches the file so it can be used on multiple tests."""
+    if not url in testFiles:
+        r = requests.get(url)
+        if 200 > r.status_code or r.status_code >= 300:
+            raise requests.HTTPError(r.status_code)
+        testFiles[url] = r.content
+    return testFiles[url]
 
 
 def setUp(self):
@@ -107,18 +126,40 @@ class databaseTests(unittest.TestCase):
         # TODO
         pass
 
-    def testCovers(self):
-        """Test adding and deleting book covers."""
-        # TODO: make this test adding and deleting
-        db = database.database()
-        db.data = {
-            "book1": {"hasCover": True},
-            "book2": {"hasCover": False}
-        }
-        self.assertTrue(db.coverExists("book1"))
-        self.assertFalse(db.coverExists("book2"))
-        self.assertFalse(db.coverExists("book3"))
+    def testBookCover(self):
+        """Test adding and deleting book covers.
+        
+        only checks that the image files exist"""
+        db = database.database(self.tempDataDir)
+        db.data = {"bookNoCover": {"hasCover": False}}
+        
+        # Add images
+        for i in range(len(testImages)):
+            db.data[f"book{i}"] = {"hasCover": False}
+            db.coverAdd(f"book{i}", getFile(testImages[i]))
+            self.assertTrue(db.coverExists(f"book{i}"))
+            self.assertTrue(os.path.exists(db.bookFilePath(f"book{i}", "cover.jpg")))
+            self.assertTrue(os.path.exists(db.bookFilePath(f"book{i}", "coverPreview.jpg")))
+            
+        # Replace image on book1 with book2s image, check they are the same
+        db.coverAdd("book0", getFile(testImages[1]))
+        with open(db.bookFilePath("book0", "cover.jpg"), "rb") as book0:
+            with open(db.bookFilePath("book1", "cover.jpg"), "rb") as book1:
+                self.assertEqual(
+                    hashlib.md5(book0.read()).hexdigest(),
+                    hashlib.md5(book1.read()).hexdigest())
+        self.assertTrue(db.coverExists("book0"))
 
+        # Check other books dont have covers
+        self.assertFalse(db.coverExists("bookNoCover"))
+        self.assertFalse(db.coverExists("bookDoesntExist"))
+
+        # Delete images
+        for i in range(len(testImages)):
+            db.coverDelete(f"book{i}")
+            self.assertFalse(db.coverExists(f"book{i}"))
+            self.assertFalse(os.path.exists(db.bookFilePath(f"book{i}", "cover.jpg")))
+            self.assertFalse(os.path.exists(db.bookFilePath(f"book{i}", "coverPreview.jpg")))
 
 class requestsTests(unittest.TestCase):
     host = "127.0.0.1"
@@ -183,9 +224,9 @@ class requestsTests(unittest.TestCase):
                 server.db.bookGet(bookID), 
                 {**bookDefaults, **book})
         emptyBook = requests.post(f"{self.baseUrl}/api/new", json={})
-        self.assertEqual(emptyBook.status_code, 422)
+        self.assertTrue(400 <= emptyBook.status_code <= 499)
         invalidBook = requests.post(f"{self.baseUrl}/api/new", data=b"Harry Potter")
-        self.assertEqual(invalidBook.status_code, 422)
+        self.assertTrue(400 <= invalidBook.status_code <= 499)
 
     def testEditBook(self):
         """Tests editing a book on the server"""

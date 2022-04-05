@@ -243,7 +243,7 @@ const search = {
             row.id = book.bookID;
 
             let img = this.tableCell("Cover");
-            img.innerHTML = "<img src = /book/cover/" + book.bookID + "/preview>";
+            img.innerHTML = "<img src = '/book/cover/" + book.bookID + "/preview.jpg' >";
             row.appendChild(img);
 
             for (let field of this.headerFields.slice(1)) {

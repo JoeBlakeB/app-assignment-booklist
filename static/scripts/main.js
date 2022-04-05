@@ -81,15 +81,16 @@ const buttonsHTML = {
 
 // Functions for changing theme and layout in the settings page
 const settings = {
+    cookieSettings: "sameSite=Lax;max-age=31536000",
     // A select layout button runs this when clicked
     setLayout: function (layout) {
         this.updateBodyClass(layout, "Layout");
-        document.cookie = "uiLayout=" + layout + ";sameSite=Lax";
+        document.cookie = "uiLayout=" + layout + ";" + this.cookieSettings;
     },
     // A select theme button runs this when clicked
     setTheme: function (theme) {
         this.updateBodyClass(theme, "ColorScheme");
-        document.cookie = "uiTheme=" + theme + ";sameSite=Lax";
+        document.cookie = "uiTheme=" + theme + ";" + this.cookieSettings;
         this.updateButtonText(theme);
     },
     // Get all buttons and set the text to "Select" except

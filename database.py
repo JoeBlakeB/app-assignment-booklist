@@ -1,8 +1,15 @@
+import io
 import json
 import os
 import shutil
 import sys
 import uuid
+
+try:
+    from PIL import Image
+except ModuleNotFoundError:
+    Image = None
+    print("Warning: Pillow is not installed, uploaded images will not be resized.")
 
 
 class database:
@@ -10,6 +17,7 @@ class database:
     bookFields = ("title", "author", "series", "isbn", "releaseDate", "publisher", "language", "genre")
     
     fullFilePath = lambda self, filename : os.path.join(self.dataDir, filename)
+    bookFilePath = lambda self, bookID, filename="" : os.path.join(self.dataDir, "books", bookID, filename)
 
     def __init__(self, dataDir=None):
         """Set the data directory for the database"""
@@ -45,6 +53,9 @@ class database:
         filename = self.fullFilePath(self.dataFilename)
 
         if os.path.exists(filename):
+            try:
+                os.remove(filename + ".bak")
+            except: pass
             os.rename(filename, filename + ".bak")
 
         with open(filename, "w") as dataFile:
@@ -94,7 +105,7 @@ class database:
 
     def bookDelete(self, bookID):
         """Delete a book and its files"""
-        bookPath = self.fullFilePath("books/" + bookID + "/")
+        bookPath = self.bookFilePath(bookID)
         if os.path.exists(bookPath):
             shutil.rmtree(bookPath)
         del self.data[bookID]
@@ -110,18 +121,24 @@ class database:
                     break
 
         return results
-    
-    # def fileAdd(self):
-    #     # TODO: """"""
-    #     pass
 
-    # def fileDelete(self):
-    #     # TODO: """"""
-    #     pass
-
-    # def coverAdd(self):
-    #     # TODO: """"""
-    #     pass
+    def coverAdd(self, bookID, originalImage):
+        """Take an images binary data and save it as the book covers images"""
+        os.makedirs(self.bookFilePath(bookID), exist_ok=True)
+        if Image:
+            # Full size book cover (maximum of 1200x1600)
+            fullCover = Image.open(io.BytesIO(originalImage)).convert("RGB")
+            fullCover.thumbnail((1200, 1600), Image.Resampling.LANCZOS)
+            fullCover.save(self.bookFilePath(bookID, "cover.jpg"), "JPEG", quality=95)
+            # Book cover thumbnail (60x80)
+            Image.open(io.BytesIO(originalImage)).convert("RGB").resize(
+                (60, 80), Image.Resampling.LANCZOS).save(
+                self.bookFilePath(bookID, "coverPreview.jpg"), "JPEG", quality=75)
+        # If PIL is not installed, just save original image and have no thumbnail
+        else:
+            with open(self.bookFilePath(bookID, "cover.jpg"), "wb") as file:
+                file.write(originalImage)
+        self.data[bookID]["hasCover"] = True
 
     def coverExists(self, bookID):
         """Returns a bool for if a book has a cover"""
@@ -129,6 +146,19 @@ class database:
             return self.data[bookID]["hasCover"]
         return False
 
-    # def coverDelete(self):
+    def coverDelete(self, bookID):
+        """Delete a books cover and cover preview, and update hasCover"""
+        for fileName in ["cover.jpg", "coverPreview.jpg"]:
+            try:
+                os.remove(self.bookFilePath(bookID, fileName))
+            except: pass
+        self.data[bookID]["hasCover"] = os.path.exists(self.bookFilePath(bookID, "cover.jpg"))
+
+
+    # def fileAdd(self):
+    #     # TODO: """"""
+    #     pass
+
+    # def fileDelete(self):
     #     # TODO: """"""
     #     pass

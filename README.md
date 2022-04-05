@@ -28,10 +28,12 @@ To stop the server send a KeyboardInterrupt (ctrl + C).
 
 - Python 3.7+
 - Flask
-- Waitress (optional)
+- Waitress (optional; werkzeug will be used if not installed)
+- Pillow (optional; used for resizing uploaded book cover images)
+- Requests (only required for testing.py)
 
 ## Misc
 
-- Server tested with Python 3.10.3 on Linux
-- Client tested with Firefox and Chrome on Linux
+- Server tested with Python 3.10.3 on Linux and Windows
+- Client tested with Firefox and Chrome on Linux, Windows, and Android
 - Button icon SVGs from [Papirus Icon Theme](https://github.com/PapirusDevelopmentTeam/papirus-icon-theme)

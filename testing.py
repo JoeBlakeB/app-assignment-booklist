@@ -278,6 +278,45 @@ class requestsTests(unittest.TestCase):
                 self.getBookIDList(json.loads(r.content)),
                 server.db.bookSearch(query).sort())
 
+    def testBookCover(self):
+        """Test adding, getting, and deleting book covers from the server."""
+        server.db.data["bookNoCover"] = bookDefaults
+        
+        coverExists = lambda bookID : 200 == requests.get(
+            f"{self.baseUrl}/book/cover/{bookID}").status_code
+
+        # Add images
+        for i in range(len(testImages)):
+            server.db.data[f"book{i}"] = {**bookDefaults, "hasCover":True}
+            r = requests.put(f"{self.baseUrl}/api/cover/book{i}/upload", data=getFile(testImages[i]))
+            self.assertEqual(r.status_code, 200)
+            self.assertTrue(coverExists(f"book{i}"))
+            self.assertTrue(os.path.exists(server.db.bookFilePath(f"book{i}", "cover.jpg")))
+            self.assertTrue(os.path.exists(server.db.bookFilePath(f"book{i}", "coverPreview.jpg")))
+
+        # Replace image on book0 with book1s image, check they are the same
+        r = requests.put(f"{self.baseUrl}/api/cover/book0/upload", data=getFile(testImages[1]))
+        self.assertEqual(r.status_code, 200)
+        with open(server.db.bookFilePath("book0", "cover.jpg"), "rb") as book0:
+            with open(server.db.bookFilePath("book1", "cover.jpg"), "rb") as book1:
+                self.assertEqual(
+                    hashlib.md5(book0.read()).hexdigest(),
+                    hashlib.md5(book1.read()).hexdigest())
+        self.assertTrue(coverExists("book0"))
+
+        # Check other books dont have covers
+        self.assertFalse(coverExists("bookNoCover"))
+        self.assertFalse(coverExists("bookDoesntExist"))
+
+        for i in range(len(testImages)):
+            # Reset hasCover to False because multiprocessing.Manager does not update dicts properly
+            server.db.data[f"book{i}"] = {**bookDefaults}
+            # Delete images
+            r = requests.delete(f"{self.baseUrl}/api/cover/book{i}/delete")
+            self.assertEqual(r.status_code, 200)
+            self.assertFalse(coverExists(f"book{i}"))
+            self.assertFalse(os.path.exists(server.db.bookFilePath(f"book{i}", "cover.jpg")))
+            self.assertFalse(os.path.exists(server.db.bookFilePath(f"book{i}", "coverPreview.jpg")))
 
 if __name__ == "__main__":
     unittest.main(verbosity=2, exit=False)

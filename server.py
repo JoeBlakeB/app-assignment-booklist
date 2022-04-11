@@ -9,6 +9,7 @@ from database import database
 
 booklist = flask.Flask(__name__, template_folder=".")
 booklist.config["TEMPLATES_AUTO_RELOAD"] = True
+booklist.config['MAX_CONTENT_LENGTH'] = 8 * 1024 * 1024
 booklist.url_map.strict_slashes = False
 
 @booklist.after_request
@@ -49,7 +50,7 @@ def sendStatic(path):
 def bookCover(bookID, size):
     """Sends the cover of a book"""
     if db.coverExists(bookID):
-        coverFilename = db.fullFilePath(f"books/{bookID}/cover{size}.png")
+        coverFilename = db.fullFilePath(f"books/{bookID}/cover{size}.jpg")
         if os.path.exists(coverFilename):
             return flask.send_file(coverFilename)
     # If book doesnt exist or if book doesnt have cover
@@ -142,6 +143,31 @@ def apiSearch():
         "books": books
     }
     return response
+
+
+@booklist.route("/api/cover/<bookID>/upload", methods=["PUT"])
+def apiCoverUpload(bookID):
+    """Upload a cover image for a book, file is sent as raw data."""
+    if not db.bookGet(bookID):
+        return {"Success": False}, 404
+    data = flask.request.get_data()
+    if data:
+        success = db.coverAdd(bookID, data)
+        if success:
+            return {"Success": True}
+    return {"Success": False}, 422
+
+
+@booklist.route("/api/cover/<bookID>/delete", methods=["DELETE"])
+def apiCoverDelete(bookID):
+    """Deletes a books cover image."""
+    if db.bookGet(bookID):
+        success = db.coverDelete(bookID)
+        if success:
+            return {"Success": True}
+    else:
+        return {"Success": False}, 404
+    return {"Success": False}, 422
 
 
 if __name__ == "__main__":

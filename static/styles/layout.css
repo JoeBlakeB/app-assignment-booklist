@@ -284,3 +284,9 @@ h4.viewBook {
 h3.viewBook {
     margin: 0 0 24px 8px;
 }
+
+.viewCover {
+    margin: 8px;
+    width: 400px;
+    max-width: calc(100% - 16px);
+}

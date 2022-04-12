@@ -100,7 +100,8 @@ class database:
             else:
                 return {
                     "title": book["title"],
-                    "author": book["author"]
+                    "author": book["author"],
+                    "hasCover": book["hasCover"]
                 }
         return False
 

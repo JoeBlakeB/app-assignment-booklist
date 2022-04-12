@@ -35,12 +35,16 @@ const bookPages = {
             form += this.bookEditField(field[0], field[1]);
         }
         // date and end form
-        form += this.bookEditField("Release Date", "releaseDate", "date") + "</form>";
+        form += this.bookEditField("Release Date", "releaseDate", "date");
+        
+        form += "<label for='cover'>Book Cover Image:</label><br /><input type='file' id='formCover' name='cover' class='bookEditForm' accept='image/*'><br /><br />"
+        
+        form += "</form>";
         return form;
     },
     // Used by bookEditHTML to get fields of data
-    bookEditField: function (label, field, type="text") {
-        return "<label for='" + field + "'>" + label + ":</label><br><input type='" + type + "' id='form" + field + "' name='" + field + "' value='" + api.currentBook[field] + "' class='bookEditFormField'><br /><br />";
+    bookEditField: function (label, field, type = "text") {
+        return "<label for='" + field + "'>" + label + ":</label><br /><input type='" + type + "' id='form" + field + "' name='" + field + "' value='" + api.currentBook[field] + "' class='bookEditFormField bookEditForm'><br /><br />";
     },
     // Tell the user that the view book page is loading, then call api.get
     viewBookLoading: function (bookID) {
@@ -59,6 +63,10 @@ const bookPages = {
                 bookHTML += "<h4 class='viewBook'>" + field[0] + ":</h4><h3 class='viewBook'>" + book[field[1]] + "</h3>";
             }
         } 
+        // Book Cover
+        if (book.hasCover) {
+            bookHTML += "<h4 class='viewBook'>Book Cover:</h4><img class='viewCover' src='/book/cover/" + api.currentBookID + "' >";
+        }
         // Add to page
         document.getElementById("detailsContainer").innerHTML = 
             buttonsHTML.backSvg() + buttonsHTML.editSvg("openPage(\"edit\", \"" + api.currentBookID + "\")") + buttonsHTML.deleteSvg("api.delete()") +
@@ -94,9 +102,9 @@ const api = {
     // Create a new book or edit an existing one
     upload: function (method, url) {
         // Dont send another request if already uploading
-        let uploadStatusMessage = "Uploading book..."
+        let uploadStatusMessage = "Uploading book...";
         let status = document.getElementById("statusText");
-        if (status.innerText == uploadStatusMessage) {
+        if (status.style.length == 0) {
             return;
         }
 
@@ -108,7 +116,7 @@ const api = {
         const book = {};
         const fields = document.getElementsByClassName("bookEditFormField");
         for (let field of fields) {
-            book[field.name] = field.value
+            book[field.name] = field.value;
         }
 
         // Upload book to the server
@@ -118,10 +126,28 @@ const api = {
             if (api.currentBookID == 0) {
                 api.currentBookID = response.bookID;
             }
+            // Upload Files
+            let noFiles = api.uploadFiles();
             // Open book
-            openPage("view", api.currentBookID, false);
-            search.search(search.currentPage, false);
-        }, book);
+            if (noFiles) {
+                openPage("view", api.currentBookID, false);
+                search.search(search.currentPage, false);
+            }
+        }, JSON.stringify(book), "application/json;charset=UTF-8");
+    },
+    uploadFiles: function () {
+        let mung = document.getElementById("formCover");
+        if (mung.files.length) {
+            let coverFile = mung.files[0];
+            this.request("PUT", "/api/cover/" + api.currentBookID + "/upload", "upload", function (req) {
+                openPage("view", api.currentBookID, false);
+                search.search(search.currentPage, false);
+            }, coverFile, coverFile.type);
+            return false;
+        }
+        else {
+            return true;
+        }
     },
     // Get book data then call bookPages.viewBookShow
     get: function (bookID) {
@@ -149,7 +175,7 @@ const api = {
         }
     },
     // XMLHttpRequest for get, upload, and delete
-    request: function (method, url, action, onSuccess, data=null) {
+    request: function (method, url, action, onSuccess, data=null, contentType=null) {
         let req = new XMLHttpRequest();
         req.onreadystatechange = function () {
             if (req.readyState == 4) {
@@ -167,8 +193,8 @@ const api = {
             req.send();
         }
         else {
-            req.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-            req.send(JSON.stringify(data));
+            req.setRequestHeader("Content-Type", contentType);
+            req.send(data);
         }
     },
     // User understandable error messages
@@ -243,7 +269,12 @@ const search = {
             row.id = book.bookID;
 
             let img = this.tableCell("Cover");
-            img.innerHTML = "<img src = '/book/cover/" + book.bookID + "/preview' >";
+            if (book.hasCover) {
+                img.innerHTML = "<img src = '/book/cover/" + book.bookID + "/preview' >";
+            }
+            else {
+                img.innerHTML = "<img src = '/static/images/bookCoverPlaceholderPreview.png' >";
+            }
             row.appendChild(img);
 
             for (let field of this.headerFields.slice(1)) {

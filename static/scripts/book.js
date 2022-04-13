@@ -116,7 +116,7 @@ const bookPages = {
         bookHTML += "</div>";
         // Book Cover
         if (book.hasCover) {
-            bookHTML += "<div class='viewBookDivider coverDivider'><h4 class='viewBook'>Book Cover:</h4><img class='viewCover' src='/book/cover/" + api.currentBookID + "' ></div>";
+            bookHTML += "<div class='viewBookDivider coverDivider'><h4 class='viewBook'>Book Cover:</h4><img class='viewCover' src='/book/cover/" + api.currentBookID + "?lastmodified=" + book.lastModified + "' ></div>";
         }
         // Add to page
         document.getElementById("detailsContainer").innerHTML = "<div class='flexContainer'><div class='viewBookDivider bookMetadata'>" + 
@@ -327,7 +327,7 @@ const search = {
 
             let img = this.tableCell("Cover");
             if (book.hasCover) {
-                img.innerHTML = "<img src = '/book/cover/" + book.bookID + "/preview' >";
+                img.innerHTML = "<img src = '/book/cover/" + book.bookID + "/preview?lastModified=" + book.lastModified + "' >";
             }
             else {
                 img.innerHTML = "<img src = '/static/images/bookCoverPlaceholderPreview.png' >";

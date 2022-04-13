@@ -3,6 +3,7 @@ import json
 import os
 import shutil
 import sys
+import time
 import uuid
 
 try:
@@ -62,6 +63,12 @@ class database:
         with open(filename, "w") as dataFile:
             dataFile.write(json.dumps(self.data, indent=4))
 
+    def modified(self, bookID):
+        """Update the lastModified variable
+        
+        lastModified used by client to make browser reload images"""
+        self.data[bookID]["lastModified"] = int(time.time())
+
     def bookAdd(self, bookData):
         """Takes a dict with book data and returns the new book ID"""
         # If book doesnt have a title, dont add to database
@@ -81,6 +88,7 @@ class database:
         while bookID in self.data or bookID == None:
             bookID = str(uuid.uuid4())
         self.data[bookID] = newBook
+        self.modified(bookID)
         return bookID
 
     def bookEdit(self, bookID, newData):
@@ -88,6 +96,7 @@ class database:
         for field in self.bookFields:
             if field in newData:
                 self.data[bookID][field] = newData[field]
+        self.modified(bookID)
 
     def bookGet(self, bookID, search=False):
         """Returns the book data if it exists, or False if it doesnt
@@ -101,7 +110,8 @@ class database:
                 return {
                     "title": book["title"],
                     "author": book["author"],
-                    "hasCover": book["hasCover"]
+                    "hasCover": book["hasCover"],
+                    "lastModified": book["lastModified"]
                 }
         return False
 
@@ -144,6 +154,7 @@ class database:
             with open(self.bookFilePath(bookID, "cover.jpg"), "wb") as file:
                 file.write(originalImage)
         self.data[bookID]["hasCover"] = True
+        self.modified(bookID)
         return True
 
     def coverExists(self, bookID):
@@ -159,6 +170,7 @@ class database:
                 os.remove(self.bookFilePath(bookID, fileName))
             except: pass
         self.data[bookID]["hasCover"] = os.path.exists(self.bookFilePath(bookID, "cover.jpg"))
+        self.modified(bookID)
         return not self.data[bookID]["hasCover"]
 
 

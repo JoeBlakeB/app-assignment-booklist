@@ -90,12 +90,16 @@ class databaseTests(unittest.TestCase):
         # Add book
         bookInDatabase = {**bookDefaults, **testData[0]}
         bookID = db.bookAdd(testData[0])
-        self.assertEqual(db.bookGet(bookID), bookInDatabase)
+        bookData = db.bookGet(bookID)
+        del bookData["lastModified"]
+        self.assertEqual(bookData, bookInDatabase)
         
         # Edit book
         bookInDatabase["language"] = "english"
         db.bookEdit(bookID, {"language": "english"})
-        self.assertEqual(db.bookGet(bookID), bookInDatabase)
+        bookData = db.bookGet(bookID)
+        del bookData["lastModified"]
+        self.assertEqual(bookData, bookInDatabase)
 
         # Make file for testing delete
         bookFilePath = self.tempDataDir + "books/" + bookID
@@ -220,9 +224,10 @@ class requestsTests(unittest.TestCase):
             r = requests.post(f"{self.baseUrl}/api/new", json=book)
             self.assertEqual(r.status_code, 200)
             bookID = json.loads(r.content)["bookID"]
+            bookData = server.db.bookGet(bookID)
             self.assertEqual(
-                server.db.bookGet(bookID), 
-                {**bookDefaults, **book})
+                bookData,
+                {**bookDefaults, **book, "lastModified": bookData["lastModified"]})
         emptyBook = requests.post(f"{self.baseUrl}/api/new", json={})
         self.assertTrue(400 <= emptyBook.status_code <= 499)
         invalidBook = requests.post(f"{self.baseUrl}/api/new", data=b"Harry Potter")
@@ -236,9 +241,10 @@ class requestsTests(unittest.TestCase):
             r = requests.put(f"{self.baseUrl}/api/edit/{bookID}", json={"isbn": isbn})
             self.assertEqual(r.status_code, 200)
             self.assertEqual(json.loads(r.content), {"Success": True})
+            bookData = server.db.bookGet(bookID)
             self.assertEqual(
-                server.db.bookGet(bookID), 
-                {"isbn": isbn, **bookDefaults, **book})
+                bookData, 
+                {"isbn": isbn, **bookDefaults, **book, "lastModified": bookData["lastModified"]})
 
     def testDeleteBook(self):
         """Tests deleting a book from the server"""

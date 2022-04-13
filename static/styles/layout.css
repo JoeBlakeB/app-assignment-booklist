@@ -256,6 +256,7 @@ h1 {
     font-size: 36pt;
     margin: 0px 12px 16px 12px;
     float: left;
+    display:grid;
 }
 
 h2, h3:not(.layoutExample h3), h4, form {
@@ -264,7 +265,7 @@ h2, h3:not(.layoutExample h3), h4, form {
 }
 
 /* Book edit form */
-form input {
+.bookEditFormField {
     background-color: var(--form-background);
     width: 100%;
     padding: 10px 16px;
@@ -275,12 +276,6 @@ form input {
     box-sizing: border-box;
 }
 
-/* View Book page */
-
-h4.viewBook {
-    margin: 24px 0 0 8px;
-}
-
 h3.viewBook {
     margin: 0 0 24px 8px;
 }
@@ -289,4 +284,26 @@ h3.viewBook {
     margin: 8px;
     width: 400px;
     max-width: calc(100% - 16px);
+    min-width: 400px;
+    max-height: 800px;
+}
+
+.flexContainer {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.viewBookDivider {
+    display: inline-block;
+}
+
+.viewBookDivider.bookMetadata {
+    flex-grow: 1;
+}
+
+#bookCoverPreview img {
+    width: 120px;
+    height: 160px;
 }

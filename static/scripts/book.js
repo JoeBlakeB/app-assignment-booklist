@@ -37,14 +37,64 @@ const bookPages = {
         // date and end form
         form += this.bookEditField("Release Date", "releaseDate", "date");
         
-        form += "<label for='cover'>Book Cover Image:</label><br /><input type='file' id='formCover' name='cover' class='bookEditForm' accept='image/*'><br /><br />"
+        form += "<label for='cover'>Book Cover Image:</label><br /><input type='file' id='formCover' name='cover' class='bookEditForm' accept='image/*' onchange='bookPages.coverChange(true)'><p onclick='bookPages.coverChange(false)' id='formCoverDelete'>"
+        if (api.currentBook.hasCover) {
+            form += "Remove Current Cover"
+        }
+        api.bookCoverAction = null;
+        form += "</p><div id='bookCoverPreview'>" + this.coverPreview() + "</div><br /><br />";
         
         form += "</form>";
         return form;
     },
+    // Generates html for book cover preview images
+    coverPreview: function (newFile = undefined) {
+        let currentImg = "";
+        let newImg = "";
+        if (api.currentBook.hasCover) {
+            currentImg = "<img id='coverCurrentPreview' src='/book/cover/" + api.currentBookID + "'>";
+        }
+        if (api.bookCoverAction == "upload") {
+            newImg = "<img id='coverUploadPreview' src='" + URL.createObjectURL(newFile) + "'>";
+        }
+        else if (api.bookCoverAction == "delete") {
+            newImg = "<img id='coverUploadPreview' src='/static/images/bookCoverPlaceholder.png'>";
+        }
+
+        return currentImg + newImg;
+    }, 
+    // Called when a file is selected or when the remove text is clicked
+    coverChange: function (newFile) {
+        let fileInput = document.getElementById("formCover");
+        let deleteText = document.getElementById("formCoverDelete");
+        // Reset input
+        if (!newFile) {
+            fileInput.value = null;
+        }
+        // Set cover delete text and set action
+        if (newFile) {
+            deleteText.innerText = "Reset";
+            api.bookCoverAction = "upload";
+        }
+        else if (api.bookCoverAction == "delete" || 
+            (api.bookCoverAction == "upload" && api.currentBook.hasCover)) {
+            deleteText.innerText = "Remove Current Cover";
+            api.bookCoverAction = null;
+        }
+        else if (api.bookCoverAction == "upload") {
+            deleteText.innerText = "";
+            api.bookCoverAction = null;
+        }
+        else {
+            deleteText.innerText = "Reset";
+            api.bookCoverAction = "delete";
+        }
+        // Generate new html for images
+        document.getElementById("bookCoverPreview").innerHTML = this.coverPreview(fileInput.files[0]);
+    },
     // Used by bookEditHTML to get fields of data
     bookEditField: function (label, field, type = "text") {
-        return "<label for='" + field + "'>" + label + ":</label><br /><input type='" + type + "' id='form" + field + "' name='" + field + "' value='" + api.currentBook[field] + "' class='bookEditFormField bookEditForm'><br /><br />";
+        return "<label for='form" + field + "'>" + label + ":</label><br /><input type='" + type + "' id='form" + field + "' name='" + field + "' value='" + api.currentBook[field] + "' class='bookEditFormField bookEditForm'><br /><br />";
     },
     // Tell the user that the view book page is loading, then call api.get
     viewBookLoading: function (bookID) {
@@ -63,14 +113,15 @@ const bookPages = {
                 bookHTML += "<h4 class='viewBook'>" + field[0] + ":</h4><h3 class='viewBook'>" + book[field[1]] + "</h3>";
             }
         } 
+        bookHTML += "</div>";
         // Book Cover
         if (book.hasCover) {
-            bookHTML += "<h4 class='viewBook'>Book Cover:</h4><img class='viewCover' src='/book/cover/" + api.currentBookID + "' >";
+            bookHTML += "<div class='viewBookDivider coverDivider'><h4 class='viewBook'>Book Cover:</h4><img class='viewCover' src='/book/cover/" + api.currentBookID + "' ></div>";
         }
         // Add to page
-        document.getElementById("detailsContainer").innerHTML = 
+        document.getElementById("detailsContainer").innerHTML = "<div class='flexContainer'><div class='viewBookDivider bookMetadata'>" + 
             buttonsHTML.backSvg() + buttonsHTML.editSvg("openPage(\"edit\", \"" + api.currentBookID + "\")") + buttonsHTML.deleteSvg("api.delete()") +
-            "<h1>View Book</h1>" + this.statusText + bookHTML;
+            "<h1>View Book</h1>" + this.statusText + bookHTML + "</div>";
     }
 };
 
@@ -92,6 +143,7 @@ const api = {
     // Current book being viewed
     currentBook: this.emptyBook,
     currentBookID: 0,
+    bookCoverAction: null,
     // Upload a new book to the server, then open that book
     new: function () {
         this.upload("POST", "/api/new");
@@ -136,18 +188,23 @@ const api = {
         }, JSON.stringify(book), "application/json;charset=UTF-8");
     },
     uploadFiles: function () {
-        let mung = document.getElementById("formCover");
-        if (mung.files.length) {
-            let coverFile = mung.files[0];
+        if (!api.bookCoverAction) {
+            return true;
+        }
+        if (api.bookCoverAction == "upload") {
+            let coverFile = document.getElementById("formCover").files[0];
             this.request("PUT", "/api/cover/" + api.currentBookID + "/upload", "upload", function (req) {
                 openPage("view", api.currentBookID, false);
                 search.search(search.currentPage, false);
             }, coverFile, coverFile.type);
-            return false;
         }
-        else {
-            return true;
+        else if (api.bookCoverAction == "delete") {
+            this.request("DELETE", "/api/cover/" + api.currentBookID + "/delete", "delete", function (req) {
+                openPage("view", api.currentBookID, false);
+                search.search(search.currentPage, false);
+            });
         }
+        return false;
     },
     // Get book data then call bookPages.viewBookShow
     get: function (bookID) {
@@ -208,7 +265,7 @@ const api = {
             var status = document.getElementById("statusText");
         }
         status.style = "color: red;";
-        if (action == "upload" && book.title == "") {
+        if (action == "upload" && book.title == undefined) {
             status.innerText = "You must enter a book title.";
         }
         else if (req.status == 404) {

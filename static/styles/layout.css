@@ -41,7 +41,7 @@ body {
 
 /* buttons */
 
-button {
+button, input[type="file"]::file-selector-button {
     padding: 8px;
     margin: 4px;
     color: var(--button-color);
@@ -90,17 +90,17 @@ button {
     fill: var(--button-color);
 }
 
-button, #controlsSearchContainer {
+button, #controlsSearchContainer, input[type="file"]::file-selector-button {
     background: var(--button-background);
     border: 2px solid var(--button-accent);
     border-radius: 10px;
 }
 
-button:hover {
+button:hover, input[type="file"]::file-selector-button:hover {
     background: var(--hover-background);
 }
 
-button:active {
+button:active, input[type="file"]::file-selector-button:active {
     background: var(--active-background);
 }
 
@@ -265,7 +265,7 @@ h2, h3:not(.layoutExample h3), h4, form {
 }
 
 /* Book edit form */
-.bookEditFormField {
+.bookEditFormField, #coverUploadDiv {
     background-color: var(--form-background);
     width: 100%;
     padding: 10px 16px;
@@ -284,7 +284,7 @@ h3.viewBook {
     margin: 8px;
     width: 400px;
     max-width: calc(100% - 16px);
-    min-width: 400px;
+    min-width: 200px;
     max-height: 800px;
 }
 
@@ -306,4 +306,41 @@ h3.viewBook {
 #bookCoverPreview img {
     width: 120px;
     height: 160px;
+}
+
+#bookCoverPreview img {
+    width: 120px;
+    height: 160px;
+}
+
+#coverUploadInput {
+    vertical-align: top;
+}
+
+#coverUploadDiv div {
+    display: inline-block;
+}
+
+#bookCoverPreview div {
+    padding: 0 4px;
+}
+
+#bookCoverPreview p, #coverUploadInput p:empty {
+    margin: 0;
+}
+
+input[type="file"]::file-selector-button {
+    width: 140px;
+}
+
+input[type="file"] {
+    width: 148px;
+    margin-right: 4px;
+}
+
+#formCoverFilename {
+    width: 140px;
+    text-overflow: ellipsis;
+    overflow: hidden; 
+    max-lines: 2;
 }

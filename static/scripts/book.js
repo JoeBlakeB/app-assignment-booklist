@@ -37,28 +37,37 @@ const bookPages = {
         // date and end form
         form += this.bookEditField("Release Date", "releaseDate", "date");
         
-        form += "<label for='cover'>Book Cover Image:</label><br /><input type='file' id='formCover' name='cover' class='bookEditForm' accept='image/*' onchange='bookPages.coverChange(true)'><p onclick='bookPages.coverChange(false)' id='formCoverDelete'>"
+        form += "<label for='formCover'>Book Cover Image:</label><br /><div ondragover='bookPages.coverDrop(event)' ondrop='bookPages.coverDrop(event)' id='coverUploadDiv'><div id='coverUploadInput'><input type='file' id='formCover' name='cover' class='bookEditForm' accept='image/*' onchange='bookPages.coverChange(true)'><p id='formCoverFilename'></p><p onclick='bookPages.coverChange(false)' id='formCoverDelete'>"
         if (api.currentBook.hasCover) {
             form += "Remove Current Cover"
         }
         api.bookCoverAction = null;
-        form += "</p><div id='bookCoverPreview'>" + this.coverPreview() + "</div><br /><br />";
+        form += "</p></div><div id='bookCoverPreview'>" + this.coverPreview() + "</div></div><br /><br />";
         
         form += "</form>";
         return form;
+    },
+    // Allow drag and drop into the entire book cover div
+    coverDrop: function (event) {
+        event.preventDefault();
+        if (event.dataTransfer.files.length) {
+            let fileInput = document.getElementById("formCover");
+            fileInput.files = event.dataTransfer.files;
+            this.coverChange(true);
+        }
     },
     // Generates html for book cover preview images
     coverPreview: function (newFile = undefined) {
         let currentImg = "";
         let newImg = "";
         if (api.currentBook.hasCover) {
-            currentImg = "<img id='coverCurrentPreview' src='/book/cover/" + api.currentBookID + "'>";
+            currentImg = "<div><p>Current:</p><img id='coverCurrentPreview' src='/book/cover/" + api.currentBookID + "?lastmodified=" + api.currentBook.lastModified + "'></div>";
         }
         if (api.bookCoverAction == "upload") {
-            newImg = "<img id='coverUploadPreview' src='" + URL.createObjectURL(newFile) + "'>";
+            newImg = "<div><p>New:</p><img id='coverUploadPreview' src='" + URL.createObjectURL(newFile) + "'></div>";
         }
         else if (api.bookCoverAction == "delete") {
-            newImg = "<img id='coverUploadPreview' src='/static/images/bookCoverPlaceholder.png'>";
+            newImg = "<div><p>New:</p><img id='coverUploadPreview' src='/static/images/bookCoverPlaceholder.png'></div>";
         }
 
         return currentImg + newImg;
@@ -66,13 +75,16 @@ const bookPages = {
     // Called when a file is selected or when the remove text is clicked
     coverChange: function (newFile) {
         let fileInput = document.getElementById("formCover");
+        let fileName = document.getElementById("formCoverFilename");
         let deleteText = document.getElementById("formCoverDelete");
         // Reset input
         if (!newFile) {
+            fileName.innerText = "";
             fileInput.value = null;
         }
         // Set cover delete text and set action
         if (newFile) {
+            fileName.innerText = fileInput.files[0].name;
             deleteText.innerText = "Reset";
             api.bookCoverAction = "upload";
         }
@@ -138,7 +150,8 @@ const api = {
         "publisher": "",
         "language": "",
         "files": [],
-        "hasCover": false
+        "hasCover": false,
+        "lastModified": 0
     },
     // Current book being viewed
     currentBook: this.emptyBook,

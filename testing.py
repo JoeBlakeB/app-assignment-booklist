@@ -7,6 +7,7 @@ import os
 import random
 import requests
 import shutil
+import time
 import unittest
 
 import database
@@ -19,7 +20,7 @@ testData = [
 
 bookDefaults = {
     "title": "", "author": "", "series": "", "genre": "", "isbn": "", "releaseDate": "",
-    "publisher": "", "language": "", "files": [], "hasCover": False
+    "publisher": "", "language": "", "files": [], "hasCover": False, "lastModified": 0
 }
 
 imagesBaseURL = "https://cdn.discordapp.com/attachments/796434329831604288"
@@ -28,18 +29,22 @@ testImages = [
     imagesBaseURL + "/960619213486170153/replitMeme.png",        # png
     imagesBaseURL + "/960619213779767307/BrunoFunkoPop.png"      # png with transparency
 ]
+testFiles = {
+    imagesBaseURL + "/964247645709271070/GNULinux.txt": ["GNU+Linux.txt", "GNU_Linux.txt"],
+    imagesBaseURL + "/964247645902217257/default-testpage.pdf": ["default-testpage.pdf", "default_testpage.pdf"],
+    imagesBaseURL + "/964247646065807390/The_Fifth_Science_by_Exurb1a.epub": ["The Fifth Science - Exurb1a.epub", "The_Fifth_Science_Exurb1a.epub"]
+}
 
-testFiles = {}
-
+testFileCache = {}
 
 def getFile(url):
     """Get a file for testing from a URL, caches the file so it can be used on multiple tests."""
-    if not url in testFiles:
+    if not url in testFileCache:
         r = requests.get(url)
         if 200 > r.status_code or r.status_code >= 300:
             raise requests.HTTPError(r.status_code)
-        testFiles[url] = r.content
-    return testFiles[url]
+        testFileCache[url] = r.content
+    return testFileCache[url]
 
 
 def setUp(self):
@@ -91,14 +96,13 @@ class databaseTests(unittest.TestCase):
         bookInDatabase = {**bookDefaults, **testData[0]}
         bookID = db.bookAdd(testData[0])
         bookData = db.bookGet(bookID)
-        del bookData["lastModified"]
         self.assertEqual(bookData, bookInDatabase)
         
         # Edit book
         bookInDatabase["language"] = "english"
         db.bookEdit(bookID, {"language": "english"})
         bookData = db.bookGet(bookID)
-        del bookData["lastModified"]
+        bookInDatabase["lastModified"] = bookData["lastModified"]
         self.assertEqual(bookData, bookInDatabase)
 
         # Make file for testing delete
@@ -124,11 +128,6 @@ class databaseTests(unittest.TestCase):
         self.assertEqual(db.bookSearch("harry potter"), [bookIDs[0]])
         self.assertEqual(db.bookSearch("orwell"), [bookIDs[1]])
         self.assertEqual(db.bookSearch("big chungus"), [])
-
-    def testFiles(self):
-        """Test adding and deleting files."""
-        # TODO
-        pass
 
     def testBookCover(self):
         """Test adding and deleting book covers.
@@ -164,10 +163,47 @@ class databaseTests(unittest.TestCase):
             self.assertFalse(db.coverExists(f"book{i}"))
             self.assertFalse(os.path.exists(db.bookFilePath(f"book{i}", "cover.jpg")))
             self.assertFalse(os.path.exists(db.bookFilePath(f"book{i}", "coverPreview.jpg")))
+    
+    def testSafeFilename(self):
+        """Test the safe filename function."""
+        db = database.database()
+        self.assertEqual(db.safeFilename("book.pdf"),         "book.pdf")
+        self.assertEqual(db.safeFilename("book/book.pdf"),    "book_book.pdf")
+        self.assertEqual(db.safeFilename("book file"),        "book_file")
+        self.assertEqual(db.safeFilename("TEST%#//book.pdf"), "TEST_book.pdf")
+        self.assertEqual(db.safeFilename(("bruh" * 100) + ".pdf"), ("bruh" * 11) + ".pdf")
+
+    def testFiles(self):
+        """Test adding and deleting files."""
+        db = database.database(self.tempDataDir)
+        db.data = {"bookNoFiles": {"files": []}}
+        self.assertFalse(db.fileGet("bookNoFiles", "file.pdf")[0])
+        self.assertFalse(db.fileGet("invalidBook", "file.pdf")[0])
+        for fileUrl in testFiles.keys():
+            bookID = fileUrl.split("/")[-2]
+            db.data[bookID] = {"files": []}
+            # Add
+            db.fileAdd(bookID, testFiles[fileUrl][0], getFile(fileUrl))
+            hashName = hashlib.md5(getFile(fileUrl)).hexdigest()
+            hashName += "." + fileUrl.split(".")[-1]
+            self.assertTrue(os.path.exists(db.bookFilePath(bookID, hashName)))
+            # Get
+            dbFile = db.fileGet(bookID, hashName)[0]
+            self.assertEqual(hashName, dbFile["hashName"])
+            self.assertEqual(dbFile["name"], testFiles[fileUrl][1])
+            # Rename
+            db.fileRename(bookID, hashName, fileUrl)
+            newFilename = db.safeFilename(fileUrl)
+            self.assertEqual(db.fileGet(bookID, hashName)
+                             [0]["name"], newFilename)
+            # Delete
+            db.fileDelete(bookID, hashName)
+            self.assertFalse(db.fileGet(bookID, hashName)[0])
+
 
 class requestsTests(unittest.TestCase):
     host = "127.0.0.1"
-    port = 8080
+    port = 8081
     baseUrl = f"http://{host}:{port}"
 
     @classmethod
@@ -186,6 +222,10 @@ class requestsTests(unittest.TestCase):
         """Stop the server."""
         self.serverThread.terminate()
         tearDown(self)
+
+    def setUp(self):
+        """Stop tests failing from too many requests"""
+        time.sleep(0.5)
 
     def testIndex(self):
         """Test that the index is send without any errors."""
@@ -225,6 +265,7 @@ class requestsTests(unittest.TestCase):
             self.assertEqual(r.status_code, 200)
             bookID = json.loads(r.content)["bookID"]
             bookData = server.db.bookGet(bookID)
+            print(bookData)
             self.assertEqual(
                 bookData,
                 {**bookDefaults, **book, "lastModified": bookData["lastModified"]})
@@ -323,6 +364,14 @@ class requestsTests(unittest.TestCase):
             self.assertFalse(coverExists(f"book{i}"))
             self.assertFalse(os.path.exists(server.db.bookFilePath(f"book{i}", "cover.jpg")))
             self.assertFalse(os.path.exists(server.db.bookFilePath(f"book{i}", "coverPreview.jpg")))
+        
+        # Test bad requests
+        invalidFile = requests.put(f"{self.baseUrl}/api/cover/book1/upload", data=b"")
+        self.assertTrue(400 <= invalidFile.status_code <= 499)
+        invalidBook = requests.put(f"{self.baseUrl}/api/cover/invalidbook/upload", data=getFile(testImages[1]))
+        self.assertTrue(400 <= invalidBook.status_code <= 499)
+        invalidDelete = requests.delete(f"{self.baseUrl}/api/cover/invalidbook/delete")
+        self.assertTrue(400 <= invalidDelete.status_code <= 499)
 
 if __name__ == "__main__":
     unittest.main(verbosity=2, exit=False)

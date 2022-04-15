@@ -1,6 +1,8 @@
+import hashlib
 import io
 import json
 import os
+import re
 import shutil
 import sys
 import time
@@ -76,7 +78,7 @@ class database:
             return False
         
         # Generate book dict with all fields
-        newBook = {"files": [], "hasCover": False}
+        newBook = {"files": [], "hasCover": False, "lastModified": 0}
         for field in self.bookFields:
             if field in bookData:
                 newBook[field] = bookData[field]
@@ -88,7 +90,6 @@ class database:
         while bookID in self.data or bookID == None:
             bookID = str(uuid.uuid4())
         self.data[bookID] = newBook
-        self.modified(bookID)
         return bookID
 
     def bookEdit(self, bookID, newData):
@@ -173,11 +174,73 @@ class database:
         self.modified(bookID)
         return not self.data[bookID]["hasCover"]
 
+    def safeFilename(self, filename):
+        """Make a filename safe for the URL"""
+        # Replace invalid characters
+        filename = re.sub(r"[^\w\._]", "_", filename)
+        while "__" in filename:
+            filename = filename.replace("__", "_")
+        # Shorten filename
+        if len(filename) > 48:
+            filetype = filename.split(".")[-1]
+            if filetype != filename:
+                filename = filename[:47 - len(filetype)] + "." + filetype
+            else:
+                filename = filename[:48]
+        return filename
 
-    # def fileAdd(self):
-    #     # TODO: """"""
-    #     pass
+    def fileAdd(self, bookID, filename, data):
+        """Save a file and store metadata in database"""
+        # Exit if book does not exist
+        if not bookID in self.data:
+            return False
+        # Store data
+        filename = self.safeFilename(filename)
+        hashName = hashlib.md5(data).hexdigest()
+        fileType = filename.split(".")[-1]
+        hashName += "." + fileType
+        if "." in filename:
+            fileType = "." + fileType
+        fileDict = {
+            "name": filename,
+            "hashName": hashName,
+            "type": fileType,
+            "size": len(data)
+        }
+        os.makedirs(self.bookFilePath(bookID), exist_ok=True)
+        with open(self.bookFilePath(bookID, fileDict["hashName"]), "wb") as file:
+            file.write(data)
+        self.data[bookID]["files"].append(fileDict)
+        return True
 
-    # def fileDelete(self):
-    #     # TODO: """"""
-    #     pass
+    def fileGet(self, bookID, hashName):
+        """Get full file from hash"""
+        if bookID in self.data:
+            for i in range(len(self.data[bookID]["files"])):
+                if self.data[bookID]["files"][i]["hashName"] == hashName:
+                    return self.data[bookID]["files"][i], i
+        return False, None
+
+    def fileRename(self, bookID, hashName, newFilename):
+        """Change a files name in database"""
+        file = self.fileGet(bookID, hashName)
+        if file[0]:
+            fileType = file[0]["type"]
+            if not newFilename.endswith(fileType):
+                newFilename += fileType
+            newFilename = self.safeFilename(newFilename)
+            self.data[bookID]["files"][file[1]]["name"] = newFilename
+        return False
+
+    def fileDelete(self, bookID, hashName):
+        """Delete a file from filesystem and database"""
+        file = self.fileGet(bookID, hashName)
+        if file[0]:
+            filename = self.bookFilePath(bookID, hashName)
+            try:
+                os.remove(filename)
+            except: pass
+            if not os.path.exists(filename):
+                del self.data[bookID]["files"][file[1]]
+                return True
+        return False

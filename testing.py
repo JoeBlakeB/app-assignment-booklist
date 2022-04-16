@@ -20,7 +20,7 @@ testData = [
 
 bookDefaults = {
     "title": "", "author": "", "series": "", "genre": "", "isbn": "", "releaseDate": "",
-    "publisher": "", "language": "", "files": [], "hasCover": False, "lastModified": 0
+    "publisher": "", "language": "", "files": [0], "hasCover": False, "lastModified": 0
 }
 
 imagesBaseURL = "https://cdn.discordapp.com/attachments/796434329831604288"
@@ -176,16 +176,16 @@ class databaseTests(unittest.TestCase):
     def testFiles(self):
         """Test adding and deleting files."""
         db = database.database(self.tempDataDir)
-        db.data = {"bookNoFiles": {"files": []}}
+        db.data = {"bookNoFiles": {"files": [0]}}
         self.assertFalse(db.fileGet("bookNoFiles", "file.pdf")[0])
         self.assertFalse(db.fileGet("invalidBook", "file.pdf")[0])
         for fileUrl in testFiles.keys():
             bookID = fileUrl.split("/")[-2]
-            db.data[bookID] = {"files": []}
+            db.data[bookID] = {"files": [0]}
             # Add
             db.fileAdd(bookID, testFiles[fileUrl][0], getFile(fileUrl))
             hashName = hashlib.md5(getFile(fileUrl)).hexdigest()
-            hashName += "." + fileUrl.split(".")[-1]
+            hashName += ".1." + fileUrl.split(".")[-1]
             self.assertTrue(os.path.exists(db.bookFilePath(bookID, hashName)))
             # Get
             dbFile = db.fileGet(bookID, hashName)[0]
@@ -201,7 +201,7 @@ class databaseTests(unittest.TestCase):
             self.assertFalse(db.fileGet(bookID, hashName)[0])
 
 
-class requestsTests(unittest.TestCase):
+class requestsTestsBase(unittest.TestCase):
     host = "127.0.0.1"
     port = 8081
     baseUrl = f"http://{host}:{port}"
@@ -212,7 +212,7 @@ class requestsTests(unittest.TestCase):
         setUp(self)
         self.booklist = server.booklist
         server.db = database.database(self.tempDataDir)
-        server.db.data = multiprocessing.Manager().dict()
+        server.db.data = self.data
         self.serverThread = multiprocessing.Process(
             target=lambda: self.booklist.run(host=self.host, port=self.port))
         self.serverThread.start()
@@ -222,15 +222,40 @@ class requestsTests(unittest.TestCase):
         """Stop the server."""
         self.serverThread.terminate()
         tearDown(self)
+    
+    def get(self, url, status="2", **qwargs):
+        """HTTP GET and check its status starts with the status arg"""
+        r = requests.get(url, **qwargs)
+        self.assertTrue(str(r.status_code).startswith(status))
+        return r
 
-    def setUp(self):
-        """Stop tests failing from too many requests"""
-        time.sleep(0.5)
+    def post(self, url, status="2", **qwargs):
+        """HTTP POST and check its status starts with the status arg"""
+        r = requests.post(url, **qwargs)
+        self.assertTrue(str(r.status_code).startswith(status))
+        return r
+
+    def put(self, url, status="2", **qwargs):
+        """HTTP PUT and check its status starts with the status arg"""
+        r = requests.put(url, **qwargs)
+        self.assertTrue(str(r.status_code).startswith(status))
+        return r
+
+    def delete(self, url, status="2", **qwargs):
+        """HTTP DELETE and check its status starts with the status arg"""
+        r = requests.delete(url, **qwargs)
+        self.assertTrue(str(r.status_code).startswith(status))
+        return r
+
+
+class requestsDataTests(requestsTestsBase):
+    """Tests for the server using requests, 
+    a multiprocessing manager is used for direct access to the servers data"""
+    data = multiprocessing.Manager().dict()
 
     def testIndex(self):
         """Test that the index is send without any errors."""
-        r = requests.get(self.baseUrl)
-        self.assertEqual(r.status_code, 200)
+        self.get(self.baseUrl)
 
     def testStatic(self):
         """Check that files are sent from the static directory properly."""
@@ -239,8 +264,7 @@ class requestsTests(unittest.TestCase):
             "scripts/main.js",
             "styles/layout.css"
         ):
-            r = requests.get(f"{self.baseUrl}/static/{path}")
-            self.assertEqual(r.status_code, 200)
+            r = self.get(f"{self.baseUrl}/static/{path}")
             file = open("static/" + path, "rb")
             self.assertEqual(r.content, file.read())
             file.close()
@@ -248,40 +272,32 @@ class requestsTests(unittest.TestCase):
     def testGetBook(self):
         """Tests getting books from the server"""
         bookID = server.db.bookAdd(testData[0])
-        r1 = requests.get(f"{self.baseUrl}/api/get/{bookID}")
-        self.assertEqual(r1.status_code, 200)
-        self.assertEqual(r1.headers['content-type'], "application/json")
-        self.assertEqual(json.loads(r1.content), server.db.bookGet(bookID))
-        r2 = requests.get(f"{self.baseUrl}/api/get/0")
+        r = self.get(f"{self.baseUrl}/api/get/{bookID}")
+        self.assertEqual(r.headers["content-type"], "application/json")
+        self.assertEqual(json.loads(r.content), server.db.bookGet(bookID))
+        self.get(f"{self.baseUrl}/api/get/0", "404")
         server.db.bookDelete(bookID)
-        r3 = requests.get(f"{self.baseUrl}/api/get/{bookID}")
-        self.assertEqual(r2.status_code, 404)
-        self.assertEqual(r3.status_code, 404)
+        self.get(f"{self.baseUrl}/api/get/{bookID}", "404")
     
     def testAddBook(self):
         """Tests adding a book to the server"""
         for book in testData:
-            r = requests.post(f"{self.baseUrl}/api/new", json=book)
-            self.assertEqual(r.status_code, 200)
+            r = self.post(f"{self.baseUrl}/api/new", json=book)
             bookID = json.loads(r.content)["bookID"]
             bookData = server.db.bookGet(bookID)
-            print(bookData)
             self.assertEqual(
                 bookData,
                 {**bookDefaults, **book, "lastModified": bookData["lastModified"]})
-        emptyBook = requests.post(f"{self.baseUrl}/api/new", json={})
-        self.assertTrue(400 <= emptyBook.status_code <= 499)
-        invalidBook = requests.post(f"{self.baseUrl}/api/new", data=b"Harry Potter")
-        self.assertTrue(400 <= invalidBook.status_code <= 499)
+        self.post(f"{self.baseUrl}/api/new", "4", json={})
+        self.post(f"{self.baseUrl}/api/new", "4", data=b"Harry Potter")
 
     def testEditBook(self):
         """Tests editing a book on the server"""
         for book in testData:
             bookID = server.db.bookAdd(book)
             isbn = str(random.randint(0,999999999))
-            r = requests.put(f"{self.baseUrl}/api/edit/{bookID}", json={"isbn": isbn})
-            self.assertEqual(r.status_code, 200)
-            self.assertEqual(json.loads(r.content), {"Success": True})
+            r = self.put(f"{self.baseUrl}/api/edit/{bookID}", json={"isbn": isbn})
+            self.assertEqual(json.loads(r.content), {"success": True})
             bookData = server.db.bookGet(bookID)
             self.assertEqual(
                 bookData, 
@@ -291,8 +307,7 @@ class requestsTests(unittest.TestCase):
         """Tests deleting a book from the server"""
         for book in testData:
             bookID = server.db.bookAdd(book)
-            r = requests.delete(f"{self.baseUrl}/api/delete/{bookID}")
-            self.assertEqual(r.status_code, 200)
+            r = self.delete(f"{self.baseUrl}/api/delete/{bookID}")
             self.assertEqual(json.loads(r.content), {"Deleted": True})
             self.assertFalse(server.db.bookGet(bookID))
 
@@ -305,8 +320,7 @@ class requestsTests(unittest.TestCase):
 
     def testSearchBook1(self):
         """Tests searching for books via the server without a query"""
-        r = requests.get(f"{self.baseUrl}/api/search")
-        self.assertEqual(r.status_code, 200)
+        r = self.get(f"{self.baseUrl}/api/search")
         self.assertEqual(
             self.getBookIDList(json.loads(r.content)),
             list(server.db.data.keys()).sort())
@@ -319,59 +333,91 @@ class requestsTests(unittest.TestCase):
         for book in testData:
             server.db.bookAdd(book)
         for query in ["harry potter", "orwell", "big chungus"]:
-            r = requests.get(f"{self.baseUrl}/api/search?q={query}")
-            self.assertEqual(r.status_code, 200)
+            r = self.get(f"{self.baseUrl}/api/search?q={query}")
             self.assertEqual(
                 self.getBookIDList(json.loads(r.content)),
                 server.db.bookSearch(query).sort())
 
+
+class requestsFilesTests(requestsTestsBase):
+    """Tests for the server using requests, 
+    a dict is used for data and all access is done via the endpoints"""
+    data = {}
+
+    def newBook(self):
+        r = self.post(f"{self.baseUrl}/api/new", json={"title": str(time.time())})
+        return json.loads(r.content)["bookID"]
+
     def testBookCover(self):
         """Test adding, getting, and deleting book covers from the server."""
-        server.db.data["bookNoCover"] = bookDefaults
-        
-        coverExists = lambda bookID : 200 == requests.get(
-            f"{self.baseUrl}/book/cover/{bookID}").status_code
-
+        coverExists = lambda bookID : 200 == requests.get(f"{self.baseUrl}/book/cover/{bookID}").status_code
+        bookIDs = []
         # Add images
         for i in range(len(testImages)):
-            server.db.data[f"book{i}"] = {**bookDefaults, "hasCover":True}
-            r = requests.put(f"{self.baseUrl}/api/cover/book{i}/upload", data=getFile(testImages[i]))
-            self.assertEqual(r.status_code, 200)
-            self.assertTrue(coverExists(f"book{i}"))
-            self.assertTrue(os.path.exists(server.db.bookFilePath(f"book{i}", "cover.jpg")))
-            self.assertTrue(os.path.exists(server.db.bookFilePath(f"book{i}", "coverPreview.jpg")))
+            bookID = self.newBook()
+            bookIDs.append(bookID)
+            self.put(f"{self.baseUrl}/api/cover/{bookID}/upload", data=getFile(testImages[i]))
+            self.assertTrue(coverExists(bookID))
+            self.assertTrue(os.path.exists(server.db.bookFilePath(bookID, "cover.jpg")))
+            self.assertTrue(os.path.exists(server.db.bookFilePath(bookID, "coverPreview.jpg")))
 
         # Replace image on book0 with book1s image, check they are the same
-        r = requests.put(f"{self.baseUrl}/api/cover/book0/upload", data=getFile(testImages[1]))
-        self.assertEqual(r.status_code, 200)
-        with open(server.db.bookFilePath("book0", "cover.jpg"), "rb") as book0:
-            with open(server.db.bookFilePath("book1", "cover.jpg"), "rb") as book1:
+        self.put(f"{self.baseUrl}/api/cover/{bookIDs[0]}/upload", data=getFile(testImages[1]))
+        with open(server.db.bookFilePath(bookIDs[0], "cover.jpg"), "rb") as book0:
+            with open(server.db.bookFilePath(bookIDs[1], "cover.jpg"), "rb") as book1:
                 self.assertEqual(
                     hashlib.md5(book0.read()).hexdigest(),
                     hashlib.md5(book1.read()).hexdigest())
-        self.assertTrue(coverExists("book0"))
+        self.assertTrue(coverExists(bookIDs[0]))
 
         # Check other books dont have covers
-        self.assertFalse(coverExists("bookNoCover"))
+        bookNoCover = self.newBook()
+        self.assertFalse(coverExists(bookNoCover))
         self.assertFalse(coverExists("bookDoesntExist"))
 
         for i in range(len(testImages)):
-            # Reset hasCover to False because multiprocessing.Manager does not update dicts properly
-            server.db.data[f"book{i}"] = {**bookDefaults}
             # Delete images
-            r = requests.delete(f"{self.baseUrl}/api/cover/book{i}/delete")
-            self.assertEqual(r.status_code, 200)
-            self.assertFalse(coverExists(f"book{i}"))
-            self.assertFalse(os.path.exists(server.db.bookFilePath(f"book{i}", "cover.jpg")))
-            self.assertFalse(os.path.exists(server.db.bookFilePath(f"book{i}", "coverPreview.jpg")))
+            self.delete(f"{self.baseUrl}/api/cover/{bookIDs[i]}/delete")
+            self.assertFalse(coverExists(bookIDs[i]))
+            self.assertFalse(os.path.exists(server.db.bookFilePath(bookIDs[i], "cover.jpg")))
+            self.assertFalse(os.path.exists(server.db.bookFilePath(bookIDs[i], "coverPreview.jpg")))
         
         # Test bad requests
-        invalidFile = requests.put(f"{self.baseUrl}/api/cover/book1/upload", data=b"")
-        self.assertTrue(400 <= invalidFile.status_code <= 499)
-        invalidBook = requests.put(f"{self.baseUrl}/api/cover/invalidbook/upload", data=getFile(testImages[1]))
-        self.assertTrue(400 <= invalidBook.status_code <= 499)
-        invalidDelete = requests.delete(f"{self.baseUrl}/api/cover/invalidbook/delete")
-        self.assertTrue(400 <= invalidDelete.status_code <= 499)
+        self.put(f"{self.baseUrl}/api/cover/{bookNoCover}/upload", "4", data=b"")
+        self.put(f"{self.baseUrl}/api/cover/invalidbook/upload", "4", data=getFile(testImages[1]))
+        self.delete(f"{self.baseUrl}/api/cover/invalidbook/delete", "4")
+    
+    def testFileUpload(self):
+        """Test uploading, renaming, getting, and deleting files from the server"""
+        bookIDNoFiles = self.newBook()
+        self.get(f"{self.baseUrl}/book/file/{bookIDNoFiles}/test", "404")
+        self.get(f"{self.baseUrl}/book/file/bookDoesntExist/test", "404")
+
+        for fileUrl in testFiles.keys():
+            bookID = self.newBook()
+            # Add
+            r = self.post(f"{self.baseUrl}/api/file/upload/{bookID}/{testFiles[fileUrl][0]}",
+                          data=getFile(fileUrl))
+            hashName = json.loads(r.content)["hashName"]
+            
+            # Get
+            book = self.get(f"{self.baseUrl}/book/file/{bookID}/{hashName}")
+            self.assertEqual(book.headers["content-disposition"],
+                "inline; filename=" + testFiles[fileUrl][1])
+            self.assertEqual(
+                hashlib.md5(getFile(fileUrl)).hexdigest(),
+                hashlib.md5(book.content).hexdigest())
+
+            # Rename
+            self.post(f"{self.baseUrl}/api/file/rename/{bookID}", 
+                      json={hashName: fileUrl})
+            book = self.get(f"{self.baseUrl}/book/file/{bookID}/{hashName}")
+            self.assertEqual(book.headers["content-disposition"], 
+                "inline; filename=" + server.db.safeFilename(fileUrl))
+
+            # Delete
+            r = self.delete(f"{self.baseUrl}/api/file/delete/{bookID}/{hashName}")
+            self.assertEqual(json.loads(r.content), {"Deleted": True})
 
 if __name__ == "__main__":
     unittest.main(verbosity=2, exit=False)

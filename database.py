@@ -78,7 +78,7 @@ class database:
             return False
         
         # Generate book dict with all fields
-        newBook = {"files": [], "hasCover": False, "lastModified": 0}
+        newBook = {"files": [0], "hasCover": False, "lastModified": 0}
         for field in self.bookFields:
             if field in bookData:
                 newBook[field] = bookData[field]
@@ -198,25 +198,25 @@ class database:
         filename = self.safeFilename(filename)
         hashName = hashlib.md5(data).hexdigest()
         fileType = filename.split(".")[-1]
-        hashName += "." + fileType
+        self.data[bookID]["files"][0] += 1
+        hashName += "." + str(self.data[bookID]["files"][0]) + "." + fileType
         if "." in filename:
             fileType = "." + fileType
-        fileDict = {
+        os.makedirs(self.bookFilePath(bookID), exist_ok=True)
+        with open(self.bookFilePath(bookID, hashName), "wb") as file:
+            file.write(data)
+        self.data[bookID]["files"].append({
             "name": filename,
             "hashName": hashName,
             "type": fileType,
             "size": len(data)
-        }
-        os.makedirs(self.bookFilePath(bookID), exist_ok=True)
-        with open(self.bookFilePath(bookID, fileDict["hashName"]), "wb") as file:
-            file.write(data)
-        self.data[bookID]["files"].append(fileDict)
-        return True
+        })
+        return hashName
 
     def fileGet(self, bookID, hashName):
         """Get full file from hash"""
         if bookID in self.data:
-            for i in range(len(self.data[bookID]["files"])):
+            for i in range(1, len(self.data[bookID]["files"])):
                 if self.data[bookID]["files"][i]["hashName"] == hashName:
                     return self.data[bookID]["files"][i], i
         return False, None
@@ -230,6 +230,7 @@ class database:
                 newFilename += fileType
             newFilename = self.safeFilename(newFilename)
             self.data[bookID]["files"][file[1]]["name"] = newFilename
+            return True
         return False
 
     def fileDelete(self, bookID, hashName):

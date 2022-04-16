@@ -19,7 +19,7 @@ def afterRequest(response):
     return response
 
 
-@booklist.route("/")
+@booklist.route("/", methods=["GET"])
 def sendIndex():
     """Send the booklist page with body classes added based on cookies and user agent."""
     userAgent = flask.request.headers.get('User-Agent').lower()
@@ -39,25 +39,35 @@ def sendIndex():
     return flask.render_template("index.html", bodyClasses=bodyClasses)
 
 
-@booklist.route("/static/<path:path>")
+@booklist.route("/static/<path:path>", methods=["GET"])
 def sendStatic(path):
     """Send all files in the static folder"""
     return flask.send_from_directory("static", path)
 
 
-@booklist.route("/book/cover/<bookID>", defaults={"size": ""})
-@booklist.route("/book/cover/<bookID>/preview", defaults={"size": "Preview"})
+@booklist.route("/book/cover/<bookID>", defaults={"size": ""}, methods=["GET"])
+@booklist.route("/book/cover/<bookID>/preview", defaults={"size": "Preview"}, methods=["GET"])
 def bookCover(bookID, size):
     """Sends the cover of a book"""
     if db.coverExists(bookID):
-        coverFilename = db.fullFilePath(f"books/{bookID}/cover{size}.jpg")
+        coverFilename = db.bookFilePath(bookID, f"cover{size}.jpg")
         if os.path.exists(coverFilename):
             return flask.send_file(coverFilename)
     # If book doesnt exist or if book doesnt have cover
     return flask.send_file(f"static/images/bookCoverPlaceholder{size}.png"), 404
 
 
-@booklist.route("/api/get/<bookID>")
+@booklist.route("/book/file/<bookID>/<hashName>", methods=["GET"])
+def bookFile(bookID, hashName):
+    """Sends a books file"""
+    book = db.fileGet(bookID, hashName)[0]
+    filePath = db.bookFilePath(bookID, hashName)
+    if book and os.path.exists(filePath):
+        return flask.send_file(filePath, download_name=book["name"])
+    return flask.abort(404)
+
+
+@booklist.route("/api/get/<bookID>", methods=["GET"])
 def apiGet(bookID):
     """Respond with the full data of a book"""
     book = db.bookGet(bookID)
@@ -72,15 +82,15 @@ def apiNew():
     """Create a new book and send back the books data"""
     # Invalid request data
     if flask.request.json == None or flask.request.json == {}:
-        return {"Success": False}, 422
+        return {"success": False}, 422
     # Add to database
     bookID = db.bookAdd(flask.request.json)
     # Book not added
     if not bookID:
-        return {"Success": False}, 422
+        return {"success": False}, 422
     # Book added, respond with new books ID
     else:
-        return {"Success": True, "bookID": bookID}
+        return {"success": True, "bookID": bookID}
 
 
 @booklist.route("/api/edit/<bookID>", methods=["PUT"])
@@ -91,9 +101,9 @@ def apiUpdate(bookID):
     # Only edit book if it exists
     if db.bookGet(bookID):
         db.bookEdit(bookID, flask.request.json)
-        return {"Success": True}
+        return {"success": True}
     else:
-        return {"Success": False}, 404
+        return {"success": False}, 404
 
 
 @booklist.route("/api/delete/<bookID>", methods=["DELETE"])
@@ -106,7 +116,7 @@ def apiDelete(bookID):
     return {"Deleted": True}
 
 
-@booklist.route("/api/search")
+@booklist.route("/api/search", methods=["GET"])
 def apiSearch():
     """Search for books based on a query
     
@@ -149,13 +159,13 @@ def apiSearch():
 def apiCoverUpload(bookID):
     """Upload a cover image for a book, file is sent as raw data."""
     if not db.bookGet(bookID):
-        return {"Success": False}, 404
+        return {"success": False}, 404
     data = flask.request.get_data()
     if data:
         success = db.coverAdd(bookID, data)
         if success:
-            return {"Success": True}
-    return {"Success": False}, 422
+            return {"success": True}
+    return {"success": False}, 422
 
 
 @booklist.route("/api/cover/<bookID>/delete", methods=["DELETE"])
@@ -164,10 +174,50 @@ def apiCoverDelete(bookID):
     if db.bookGet(bookID):
         success = db.coverDelete(bookID)
         if success:
-            return {"Success": True}
+            return {"success": True}
     else:
-        return {"Success": False}, 404
-    return {"Success": False}, 422
+        return {"success": False}, 404
+    return {"success": False}, 422
+
+
+@booklist.route("/api/file/upload/<bookID>/<filename>", methods=["POST"])
+def apiFileUpload(bookID, filename):
+    """Uploads a books file."""
+    if not db.bookGet(bookID):
+        return {"success": False, "hashName": None}, 404
+    data = flask.request.get_data()
+    if data:
+        hashName = db.fileAdd(bookID, filename, data)
+        if hashName:
+            return {"success": True, "hashName": hashName}
+    return {"success": False, "hashName": None}, 422
+
+
+@booklist.route("/api/file/rename/<bookID>", methods=["POST"])
+def apiFileRename(bookID):
+    """Rename a file.
+    
+    Request body is a json containing the hashNames and new filenames
+    of files to be renamed:
+    {hashName: newFilename}"""
+    json = flask.request.json
+    if json == None or json == {}:
+        return {"success": False}, 422
+    for fileHash in json.keys():
+        success = db.fileRename(bookID, fileHash, json[fileHash])
+        if not success:
+            return {"success": False}, 404
+    return {"success": True}
+
+
+@booklist.route("/api/file/delete/<bookID>/<hashName>", methods=["DELETE"])
+def apiFileDelete(bookID, hashName):
+    """Delete a books file."""
+    status = db.fileDelete(bookID, hashName)
+    if status:
+        return {"Deleted": True}
+    else:
+        return {"Deleted": False}, 404
 
 
 if __name__ == "__main__":

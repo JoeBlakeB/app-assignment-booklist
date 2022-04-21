@@ -78,9 +78,14 @@ const buttonsHTML = {
         return "<button type='button' id='deleteButton' class='controlsButton' onclick='" + onclick + "'> <svg height='24' width='24' transform='scale(1.5)'> <path d='M 10,4 C 9,4 9,5 9,5 H 6 C 6,5 5,5 5,6 V 7 H 19 V 6 C 19,5 18,5 18,5 H 15 C 15,5 15,4 14,4 Z M 6,8 V 19 C 6,19.52 6.48,20 7,20 H 17 C 17.52,20 18,19.52 18,19 V 8 Z'/></svg></button>";
     },
     downloadSvg: function (onclick) {
-        return "<button class='downloadButton controlsButton' onclick='" + onclick + "'> <svg height='24' width='24' transform='scale(1.5)'> <g transform='translate(4,5)'> <path style='fill:currentColor' class='ColorScheme-Text' d='M 7,5 H 9 V 8 H 11 L 8,11.5 5,8 H 7 Z M 8,2 C 5.93,2 4.17,3.27 3.41,5.06 1.48,5.35 0,7 0,9 0,11.21 1.79,13 4,13 H 12.5 C 14.43,13 16,11.43 16,9.5 16,7.7 14.65,6.23 12.91,6.03 12.45,3.74 10.43,2 8,2 Z'/> </g></svg></button>"
+        return "<button class='downloadButton controlsButton' onclick='" + onclick + "'> <svg height='24' width='24' transform='scale(1.5)'> <g transform='translate(4,5)'> <path style='fill:currentColor' class='ColorScheme-Text' d='M 7,5 H 9 V 8 H 11 L 8,11.5 5,8 H 7 Z M 8,2 C 5.93,2 4.17,3.27 3.41,5.06 1.48,5.35 0,7 0,9 0,11.21 1.79,13 4,13 H 12.5 C 14.43,13 16,11.43 16,9.5 16,7.7 14.65,6.23 12.91,6.03 12.45,3.74 10.43,2 8,2 Z'/> </g></svg></button>";
     },
-    
+    cancelSvg: function (onclick) {
+        return "<button type='button' class='cancelButton controlsButton' onclick='" + onclick + "'> <svg transform='scale(2)' width='24' height='24'> <path transform='translate(0,1)' d='m 7.580079,6.079453 c -0.38343,0 -0.766744,0.147603 -1.060547,0.441406 -0.587605,0.587606 -0.587605,1.533488 0,2.121094 l 3.359374,3.357422 -3.359375,3.359375 c -0.587605,0.587605 -0.587605,1.533488 0,2.121094 0.587607,0.587605 1.533489,0.587605 2.121095,0 L 12,14.120468 l 3.359375,3.359376 c 0.587606,0.587605 1.533487,0.587605 2.121094,0 0.587605,-0.587606 0.587605,-1.533489 0,-2.121094 l -3.359376,-3.359375 3.359376,-3.357422 c 0.587605,-0.587606 0.587605,-1.533488 0,-2.121094 -0.587607,-0.5876064 -1.533488,-0.5876064 -2.121094,0 L 12,9.880234 8.640626,6.520859 C 8.346823,6.227056 7.963508,6.079453 7.580079,6.079453 Z'/> </svg></button>";
+    },
+    undoSvg: function (onclick) {
+        return "<button type='button' class='undoButton controlsButton' onclick='" + onclick + "'> <svg transform='scale(2)' width='24' height='24'> <g transform='translate(4,5)'><path style='fill:currentColor' class='ColorScheme-Text' d='M 7,1.5 V 4 H 9.5 C 12.5,4 14.5,6 14.5,9 14.5,12.6 10.5,14 10.5,14 10.5,14 12,11.8 12,10.5 12,9.2 10.5,8 9,8 H 7 V 10.5 L 0.5,6 Z'/></g> </svg></button>";
+    }
 };
 
 // Functions for changing theme and layout in the settings page

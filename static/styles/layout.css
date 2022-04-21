@@ -375,6 +375,10 @@ table.fileTable tr:not(:last-child) > * {
     min-width: unset;
 }
 
+.fileName input:disabled {
+    opacity: 0.4;
+}
+
 .fileName {
     width: 100%;
 }
@@ -389,6 +393,14 @@ table.fileTable tr:not(:last-child) > * {
     padding-top: 4px;
 }
 
+.fileTableRow td:first-child {
+    padding-left: 4px;
+}
+
+.fileTableRow td:last-child {
+    padding-right: 4px;
+}
+
 #fileUploadStats, #formFiles {
     float: left;
 }
@@ -399,5 +411,5 @@ input#formFiles[type="file"]::file-selector-button {
 
 input#formFiles[type="file"] {
     width: 108px;
-    margin-right: 4px;
+    margin: 4px;
 }

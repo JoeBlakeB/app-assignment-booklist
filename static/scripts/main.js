@@ -75,8 +75,12 @@ const buttonsHTML = {
         return "<button id='editButton' class='controlsButton' onclick='" + onclick + "'> <svg height='24' width='24' transform='scale(1.6)'> <path d='M 12.778, 1.2222 C 12.778, 1.2222 12.278, 0.72224 11.778, 1.2222 L 10, 3 13, 6 14.778, 4.2222 C 15.278, 3.7222 14.778, 3.2222 14.778, 3.2222 Z M 9, 4 1, 12 V 15 H 4 L 12, 7 Z'/></svg></button>";
     },
     deleteSvg: function (onclick) {
-        return "<button id='deleteButton' class='controlsButton' onclick='" + onclick + "'> <svg height='24' width='24' transform='scale(1.5)'> <path d='M 10,4 C 9,4 9,5 9,5 H 6 C 6,5 5,5 5,6 V 7 H 19 V 6 C 19,5 18,5 18,5 H 15 C 15,5 15,4 14,4 Z M 6,8 V 19 C 6,19.52 6.48,20 7,20 H 17 C 17.52,20 18,19.52 18,19 V 8 Z'/></svg></button>";
-    }
+        return "<button type='button' id='deleteButton' class='controlsButton' onclick='" + onclick + "'> <svg height='24' width='24' transform='scale(1.5)'> <path d='M 10,4 C 9,4 9,5 9,5 H 6 C 6,5 5,5 5,6 V 7 H 19 V 6 C 19,5 18,5 18,5 H 15 C 15,5 15,4 14,4 Z M 6,8 V 19 C 6,19.52 6.48,20 7,20 H 17 C 17.52,20 18,19.52 18,19 V 8 Z'/></svg></button>";
+    },
+    downloadSvg: function (onclick) {
+        return "<button class='downloadButton controlsButton' onclick='" + onclick + "'> <svg height='24' width='24' transform='scale(1.5)'> <g transform='translate(4,5)'> <path style='fill:currentColor' class='ColorScheme-Text' d='M 7,5 H 9 V 8 H 11 L 8,11.5 5,8 H 7 Z M 8,2 C 5.93,2 4.17,3.27 3.41,5.06 1.48,5.35 0,7 0,9 0,11.21 1.79,13 4,13 H 12.5 C 14.43,13 16,11.43 16,9.5 16,7.7 14.65,6.23 12.91,6.03 12.45,3.74 10.43,2 8,2 Z'/> </g></svg></button>"
+    },
+    
 };
 
 // Functions for changing theme and layout in the settings page

@@ -265,19 +265,19 @@ h2, h3:not(.layoutExample h3), h4, form {
 }
 
 /* Book edit form */
-.bookEditFormField, #coverUploadDiv {
+.bookEditFormInput, #coverUploadDiv, .fileTable {
     background-color: var(--form-background);
     width: 100%;
+    min-width: 200px;
     padding: 10px 16px;
-    margin: 4px 0;
-    display: inline-block;
+    margin: 4px 0 20px 0;
     border: 2px solid var(--form-border);
     border-radius: 6px;
     box-sizing: border-box;
 }
 
-h3.viewBook {
-    margin: 0 0 24px 8px;
+#bookEditForm > label {
+    margin: 16px 0 8px 0;
 }
 
 .viewCover {
@@ -329,11 +329,11 @@ h3.viewBook {
     margin: 0;
 }
 
-input[type="file"]::file-selector-button {
+input#formCover[type="file"]::file-selector-button {
     width: 140px;
 }
 
-input[type="file"] {
+input#formCover[type="file"] {
     width: 148px;
     margin-right: 4px;
 }
@@ -342,5 +342,62 @@ input[type="file"] {
     width: 140px;
     text-overflow: ellipsis;
     overflow: hidden; 
-    max-lines: 2;
+    max-lines: 3;
+    display: -webkit-box;
+    line-clamp: 3;
+    box-orient: vertical;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;  
+}
+
+
+/* File Table */
+
+table.fileTable tr:not(:last-child) > * {
+    border-bottom-style: dotted;
+    border-color: var(--border-color);
+    border-width: 1px;
+}
+
+#viewFileTable {
+    margin: 8px;
+    width: calc(100% - 16px);
+}
+
+.fileTable {
+    padding: 0px;
+    border-spacing: 0;
+}
+
+.fileName input {
+    height: 48px;
+    margin: 0;
+    min-width: unset;
+}
+
+.fileName {
+    width: 100%;
+}
+
+.fileIcon {
+    height: 54px;
+    width: 54px;
+    margin-top: 4px;
+}
+
+.fileTableRow {
+    padding-top: 4px;
+}
+
+#fileUploadStats, #formFiles {
+    float: left;
+}
+
+input#formFiles[type="file"]::file-selector-button {
+    width: 100px;
+}
+
+input#formFiles[type="file"] {
+    width: 108px;
+    margin-right: 4px;
 }

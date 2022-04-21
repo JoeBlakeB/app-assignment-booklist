@@ -1,6 +1,6 @@
 "use strict";
 
-// Functions for opening book metadata pages
+// Functions for generating and using the book pages
 const bookPages = {
     statusText: "<h3 id='statusText' style='display:none;'></h3>",
     bookFields: [
@@ -37,14 +37,12 @@ const bookPages = {
         // date and end form
         form += this.bookEditField("Release Date", "releaseDate", "date");
         
-        form += "<label for='formCover'>Book Cover Image:</label><br /><div ondragover='bookPages.coverDrop(event)' ondrop='bookPages.coverDrop(event)' id='coverUploadDiv'><div id='coverUploadInput'><input type='file' id='formCover' name='cover' class='bookEditForm' accept='image/*' onchange='bookPages.coverChange(true)'><p id='formCoverFilename'></p><p onclick='bookPages.coverChange(false)' id='formCoverDelete'>"
+        form += "<label for='formCover'>Book Cover Image:</label><div ondragover='bookPages.coverDrop(event)' ondrop='bookPages.coverDrop(event)' id='coverUploadDiv'><div id='coverUploadInput'><input type='file' id='formCover' name='cover' accept='image/*' onchange='bookPages.coverChange(true)'><p id='formCoverFilename'></p><p onclick='bookPages.coverChange(false)' id='formCoverDelete'>"
         if (api.currentBook.hasCover) {
             form += "Remove Current Cover"
         }
         api.bookCoverAction = null;
-        form += "</p></div><div id='bookCoverPreview'>" + this.coverPreview() + "</div></div><br /><br />";
-        
-        form += "</form>";
+        form += "</p></div><div id='bookCoverPreview'>" + this.coverPreview() + "</div></div><label for='formFiles'>Book Files:</label>" + this.fileTableHTML("edit") + "</form>";
         return form;
     },
     // Allow drag and drop into the entire book cover div
@@ -106,7 +104,7 @@ const bookPages = {
     },
     // Used by bookEditHTML to get fields of data
     bookEditField: function (label, field, type = "text") {
-        return "<label for='form" + field + "'>" + label + ":</label><br /><input type='" + type + "' id='form" + field + "' name='" + field + "' value='" + api.currentBook[field] + "' class='bookEditFormField bookEditForm'><br /><br />";
+        return "<label for='form" + field + "'>" + label + ":</label><input type='" + type + "' id='form" + field + "' name='" + field + "' value='" + api.currentBook[field] + "' class='bookEditFormField bookEditFormInput'>";
     },
     // Tell the user that the view book page is loading, then call api.get
     viewBookLoading: function (bookID) {
@@ -128,12 +126,36 @@ const bookPages = {
         bookHTML += "</div>";
         // Book Cover
         if (book.hasCover) {
-            bookHTML += "<div class='viewBookDivider coverDivider'><h4 class='viewBook'>Book Cover:</h4><img class='viewCover' src='/book/cover/" + api.currentBookID + "?lastmodified=" + book.lastModified + "' ></div>";
+            bookHTML += "<div class='viewBookDivider coverDivider'><img class='viewCover' src='/book/cover/" + api.currentBookID + "?lastmodified=" + book.lastModified + "' ></div>";
         }
         // Add to page
         document.getElementById("detailsContainer").innerHTML = "<div class='flexContainer'><div class='viewBookDivider bookMetadata'>" + 
             buttonsHTML.backSvg() + buttonsHTML.editSvg("openPage(\"edit\", \"" + api.currentBookID + "\")") + buttonsHTML.deleteSvg("api.delete()") +
-            "<h1>View Book</h1>" + this.statusText + bookHTML + "</div>";
+            "<h1>View Book</h1>" + this.statusText + bookHTML + "</div>" + this.fileTableHTML("view");
+    },
+    // Generate the file table html
+    fileTableHTML: function (type) {
+        let fileTable = "<table id='" + type + "FileTable' class='fileTable'>";
+        // Upload file button
+        if (type == "edit") {
+            fileTable += "<td colspan='3'><input type='file' id='formFiles' name='files' onchange='' multiple><p id='fileUploadStats'></p></td>";
+        }
+        // Return if view and no files
+        else if (api.currentBook.files.length == 0) {
+            return "";
+        }
+        // Row for each file
+        for (let file of api.currentBook.files) {
+            fileTable += "<tr class='fileTableRow' id='" + file.hashName + "'><td><img class='fileIcon' src='/static/svg/pdf.svg'></td>";
+            if (type == "edit") {
+                fileTable += "<td class='fileName'><input type='text' class='bookEditFormInput' value='" + file.name + "'></td><td>" + buttonsHTML.deleteSvg() + "</td>";
+            }
+            else {
+                fileTable += "<td class='fileName'><p>" + file.name + " (" + api.fileSize(file.size) + ")</p></td><td>" + buttonsHTML.downloadSvg("window.open(\"/book/file/" + api.currentBookID + "/" + file.hashName + "\")") + "</td>";
+            }
+            fileTable += "</tr>";
+        }
+        return fileTable + "</table>";
     }
 };
 
@@ -222,7 +244,9 @@ const api = {
     // Get book data then call bookPages.viewBookShow
     get: function (bookID) {
         this.request("GET", "api/get/" + bookID, "get", function (req) {
-            bookPages.viewBookShow(JSON.parse(req.responseText));
+            let book = JSON.parse(req.responseText);
+            book.files = book.files.splice(1);
+            bookPages.viewBookShow(book);
         });
     },
     // Delete a book then close the page
@@ -290,6 +314,15 @@ const api = {
         else {
             status.innerText = "Error " + req.status + ": " + req.statusText;
         }
+    },
+    fileSize: function (size) {
+        let units = ["Bytes", "KB", "MB", "GB"];
+        let unit = 0;
+        while (size > 1024 && unit < units.length) {
+            unit ++;
+            size /= 1024;
+        }
+        return Math.round(size) + " " + units[unit];
     }
 };
 

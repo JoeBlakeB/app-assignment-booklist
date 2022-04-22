@@ -31,7 +31,7 @@ class database:
             if "--data-dir" in sys.argv:
                 self.dataDir = sys.argv[sys.argv.index("--data-dir") + 1]
             else:
-                self.dataDir = "./data/"
+                self.dataDir = os.path.join(os.path.dirname(__file__), "data")
 
     def load(self):
         """Load the database"""

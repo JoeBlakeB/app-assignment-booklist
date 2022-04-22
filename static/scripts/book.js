@@ -148,7 +148,7 @@ const bookPages = {
         }
         // Row for each file
         for (let file of api.currentBook.files) {
-            fileTable += this.fileRowHTML(file.hashName, file.name, page, "/static/svg/pdf.svg", file.size);
+            fileTable += this.fileRowHTML(file.hashName, file.name, page, this.fileIconUrl(file.name), file.size);
         }
         return fileTable + "</table>";
     },
@@ -209,11 +209,14 @@ const bookPages = {
     // Remove a file from api.bookFilesDelete and update the table
     restoreFileButton: function (fileID) {
         let element = document.getElementById(fileID);
-        element.children[0].firstChild.src = "/static/svg/pdf.svg";
+        element.children[0].firstChild.src = this.fileIconUrl(api.fileFromHashName(fileID).name);
         element.children[1].firstChild.disabled = false;
         element.children[2].innerHTML = buttonsHTML.deleteSvg("bookPages.deleteFileButton(\"" + fileID + "\")");
         let arrayIndex = api.bookFilesDelete.indexOf(fileID);
         api.bookFilesDelete.splice(arrayIndex, 1);
+    },
+    fileIconUrl: function (fileName) {
+        return "/fileicon/" + fileName.split(".").slice(-1) + ".svg";
     }
 };
 

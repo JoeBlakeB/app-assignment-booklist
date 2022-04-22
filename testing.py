@@ -252,6 +252,7 @@ class requestsDataTests(requestsTestsBase):
     """Tests for the server using requests, 
     a multiprocessing manager is used for direct access to the servers data"""
     data = multiprocessing.Manager().dict()
+    server.fileIcons = server.fileIconsDict()
 
     def testIndex(self):
         """Test that the index is send without any errors."""
@@ -265,9 +266,8 @@ class requestsDataTests(requestsTestsBase):
             "styles/layout.css"
         ):
             r = self.get(f"{self.baseUrl}/static/{path}")
-            file = open("static/" + path, "rb")
-            self.assertEqual(r.content, file.read())
-            file.close()
+            with open(os.path.join(os.path.dirname(__file__), "static", path), "rb") as file:
+                self.assertEqual(r.content, file.read())
 
     def testGetBook(self):
         """Tests getting books from the server"""
@@ -278,6 +278,16 @@ class requestsDataTests(requestsTestsBase):
         self.get(f"{self.baseUrl}/api/get/0", "404")
         server.db.bookDelete(bookID)
         self.get(f"{self.baseUrl}/api/get/{bookID}", "404")
+
+    def testFileIcon(self):
+        for fileName, urlName in (("pdf", "pdf"),
+                                  ("unknown", "bruh"),
+                                  ("doc+docx+odt+rtf", "docx")):
+            with open(os.path.join(os.path.dirname(__file__), 
+                      f"static/svg/filetype-{fileName}.svg"), "rb") as file:
+                self.assertEqual(
+                    self.get(f"{self.baseUrl}/fileicon/{urlName}.svg").content,
+                    file.read())
     
     def testAddBook(self):
         """Tests adding a book to the server"""

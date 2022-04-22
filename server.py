@@ -67,6 +67,25 @@ def bookFile(bookID, hashName):
     return flask.abort(404)
 
 
+def fileIconsDict():
+    """Generate the fileIcons dict for file icon filenames"""
+    fileIcons = {}
+    for filename in os.listdir(os.path.join(os.path.dirname(__file__), "static/svg")):
+        if filename.startswith("filetype-"):
+            fileTypes = filename[9:-4].split("+")
+            for fileType in fileTypes:
+                fileIcons[fileType] = filename
+    return fileIcons
+
+
+@booklist.route("/fileicon/<fileType>.svg", methods=["GET"])
+def fileIcon(fileType):
+    """Sends a icon for a specific filetype"""
+    if fileType in fileIcons:
+        return flask.send_file("static/svg/" + fileIcons[fileType])
+    return flask.send_file("static/svg/filetype-unknown.svg")
+
+
 @booklist.route("/api/get/<bookID>", methods=["GET"])
 def apiGet(bookID):
     """Respond with the full data of a book"""
@@ -253,6 +272,7 @@ if __name__ == "__main__":
     # Startup
     db = database()
     db.load()
+    fileIcons = fileIconsDict()
 
     # Run server
     if useWaitress:

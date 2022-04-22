@@ -20,7 +20,7 @@ testData = [
 
 bookDefaults = {
     "title": "", "author": "", "series": "", "genre": "", "isbn": "", "releaseDate": "",
-    "publisher": "", "language": "", "files": [0], "hasCover": False, "lastModified": 0
+    "publisher": "", "language": "", "files": {"count": 0}, "hasCover": False, "lastModified": 0
 }
 
 imagesBaseURL = "https://cdn.discordapp.com/attachments/796434329831604288"
@@ -171,34 +171,33 @@ class databaseTests(unittest.TestCase):
         self.assertEqual(db.safeFilename("book/book.pdf"),    "book_book.pdf")
         self.assertEqual(db.safeFilename("book file"),        "book_file")
         self.assertEqual(db.safeFilename("TEST%#//book.pdf"), "TEST_book.pdf")
-        self.assertEqual(db.safeFilename(("bruh" * 100) + ".pdf"), ("bruh" * 11) + ".pdf")
+        self.assertEqual(db.safeFilename(("bruh" * 100) + ".pdf"), ("bruh" * 15) + ".pdf")
 
     def testFiles(self):
         """Test adding and deleting files."""
         db = database.database(self.tempDataDir)
-        db.data = {"bookNoFiles": {"files": [0]}}
-        self.assertFalse(db.fileGet("bookNoFiles", "file.pdf")[0])
-        self.assertFalse(db.fileGet("invalidBook", "file.pdf")[0])
+        db.data = {"bookNoFiles": {"files": {"count":0}}}
+        self.assertFalse(db.fileGet("bookNoFiles", "file.pdf"))
+        self.assertFalse(db.fileGet("invalidBook", "file.pdf"))
         for fileUrl in testFiles.keys():
             bookID = fileUrl.split("/")[-2]
-            db.data[bookID] = {"files": [0]}
+            db.data[bookID] = {"files": {"count": 0}}
             # Add
             db.fileAdd(bookID, testFiles[fileUrl][0], getFile(fileUrl))
             hashName = hashlib.md5(getFile(fileUrl)).hexdigest()
             hashName += ".1." + fileUrl.split(".")[-1]
             self.assertTrue(os.path.exists(db.bookFilePath(bookID, hashName)))
             # Get
-            dbFile = db.fileGet(bookID, hashName)[0]
+            dbFile = db.fileGet(bookID, hashName)
             self.assertEqual(hashName, dbFile["hashName"])
             self.assertEqual(dbFile["name"], testFiles[fileUrl][1])
             # Rename
             db.fileRename(bookID, hashName, fileUrl)
             newFilename = db.safeFilename(fileUrl)
-            self.assertEqual(db.fileGet(bookID, hashName)
-                             [0]["name"], newFilename)
+            self.assertEqual(db.fileGet(bookID, hashName)["name"], newFilename)
             # Delete
             db.fileDelete(bookID, hashName)
-            self.assertFalse(db.fileGet(bookID, hashName)[0])
+            self.assertFalse(db.fileGet(bookID, hashName))
 
 
 class requestsTestsBase(unittest.TestCase):

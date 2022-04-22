@@ -60,7 +60,7 @@ def bookCover(bookID, size):
 @booklist.route("/book/file/<bookID>/<hashName>", methods=["GET"])
 def bookFile(bookID, hashName):
     """Sends a books file"""
-    book = db.fileGet(bookID, hashName)[0]
+    book = db.fileGet(bookID, hashName)
     filePath = db.bookFilePath(bookID, hashName)
     if book and os.path.exists(filePath):
         return flask.send_file(filePath, download_name=book["name"])

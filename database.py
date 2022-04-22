@@ -78,7 +78,7 @@ class database:
             return False
         
         # Generate book dict with all fields
-        newBook = {"files": [0], "hasCover": False, "lastModified": 0}
+        newBook = {"files": {"count": 0}, "hasCover": False, "lastModified": 0}
         for field in self.bookFields:
             if field in bookData:
                 newBook[field] = bookData[field]
@@ -181,12 +181,12 @@ class database:
         while "__" in filename:
             filename = filename.replace("__", "_")
         # Shorten filename
-        if len(filename) > 48:
+        if len(filename) > 64:
             filetype = filename.split(".")[-1]
             if filetype != filename:
-                filename = filename[:47 - len(filetype)] + "." + filetype
+                filename = filename[:63 - len(filetype)] + "." + filetype
             else:
-                filename = filename[:48]
+                filename = filename[:64]
         return filename
 
     def fileAdd(self, bookID, filename, data):
@@ -198,50 +198,51 @@ class database:
         filename = self.safeFilename(filename)
         hashName = hashlib.md5(data).hexdigest()
         fileType = filename.split(".")[-1]
-        self.data[bookID]["files"][0] += 1
-        hashName += "." + str(self.data[bookID]["files"][0]) + "." + fileType
+        self.data[bookID]["files"]["count"] += 1
+        fileID = str(self.data[bookID]["files"]["count"])
+        hashName += "." + fileID + "." + fileType
         if "." in filename:
             fileType = "." + fileType
         os.makedirs(self.bookFilePath(bookID), exist_ok=True)
         with open(self.bookFilePath(bookID, hashName), "wb") as file:
             file.write(data)
-        self.data[bookID]["files"].append({
+        self.data[bookID]["files"][fileID] = {
             "name": filename,
             "hashName": hashName,
             "type": fileType,
             "size": len(data)
-        })
+        }
         return hashName
 
     def fileGet(self, bookID, hashName):
         """Get full file from hash"""
         if bookID in self.data:
-            for i in range(1, len(self.data[bookID]["files"])):
-                if self.data[bookID]["files"][i]["hashName"] == hashName:
-                    return self.data[bookID]["files"][i], i
-        return False, None
+            for fileID in list(self.data[bookID]["files"].keys())[1:]:
+                if self.data[bookID]["files"][fileID]["hashName"] == hashName:
+                    return {**self.data[bookID]["files"][fileID], "fileID": fileID}
+        return False
 
     def fileRename(self, bookID, hashName, newFilename):
         """Change a files name in database"""
         file = self.fileGet(bookID, hashName)
-        if file[0]:
-            fileType = file[0]["type"]
+        if file:
+            fileType = file["type"]
             if not newFilename.endswith(fileType):
                 newFilename += fileType
             newFilename = self.safeFilename(newFilename)
-            self.data[bookID]["files"][file[1]]["name"] = newFilename
+            self.data[bookID]["files"][file["fileID"]]["name"] = newFilename
             return True
         return False
 
     def fileDelete(self, bookID, hashName):
         """Delete a file from filesystem and database"""
         file = self.fileGet(bookID, hashName)
-        if file[0]:
+        if file:
             filename = self.bookFilePath(bookID, hashName)
             try:
                 os.remove(filename)
             except: pass
             if not os.path.exists(filename):
-                del self.data[bookID]["files"][file[1]]
+                del self.data[bookID]["files"][file["fileID"]]
                 return True
         return False

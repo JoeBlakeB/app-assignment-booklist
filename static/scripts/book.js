@@ -138,7 +138,7 @@ const bookPages = {
         let fileTable = "<table id='" + page + "FileTable' class='fileTable' ondragover='bookPages.fileDrop(event)' ondrop='bookPages.fileDrop(event)'>";
         // Upload file button
         if (page == "edit") {
-            api.bookFilesNew = { index: 1 };
+            api.bookFilesNew = { count: 1 };
             api.bookFilesDelete = [];
             fileTable += "<td colspan='3'><input type='file' id='formFiles' name='files' onchange='bookPages.addFiles()' multiple><p id='fileUploadStats'></p></td>";
         }
@@ -148,13 +148,15 @@ const bookPages = {
         }
         // Row for each file
         for (let file of api.currentBook.files) {
-            fileTable += this.fileRowHTML(file.hashName, file.name, page, this.fileIconUrl(file.name), file.size);
+            fileTable += "<tr class='fileTableRow' id='" + file.hashName + "'>" + 
+                this.fileRowHTML(file.hashName, file.name, page, 
+                    this.fileIconUrl(file.name), file.size) + "</tr>";
         }
         return fileTable + "</table>";
     },
     // Generate a row for the file table
     fileRowHTML: function (fileID, fileName, type, image, fileSize=0) {
-        let fileTable = "<tr class='fileTableRow' id='" + fileID + "'><td><img class='fileIcon' src='" + image + "'></td>";
+        let fileTable = "<td><img class='fileIcon' src='" + image + "'></td>";
         if (type == "view") {
             fileTable += "<td class='fileName'><p>" + fileName + " (" + api.fileSize(fileSize) + ")</p></td><td>" + buttonsHTML.downloadSvg("window.open(\"/book/file/" + api.currentBookID + "/" + fileID + "\")");
         }
@@ -167,7 +169,7 @@ const bookPages = {
                 fileTable += type;
             }
         }
-        return fileTable + "</td></tr>";
+        return fileTable + "</td>";
     },
     // Allow drag and drop into the entire book files table
     fileDrop: function (event) {
@@ -187,8 +189,14 @@ const bookPages = {
         // Add them to the HTML
         let table = document.getElementById("editFileTable").firstChild;
         for (let file of files) {
-            let fileID = "newFile" + api.bookFilesNew.index++;
-            table.innerHTML += this.fileRowHTML(fileID, file.name, buttonsHTML.cancelSvg("bookPages.cancelUploadButton(\"" + fileID + "\")"), "/static/svg/new.svg");
+            let fileID = "newFile" + api.bookFilesNew.count++;
+            let newRow = document.createElement("tr");
+            newRow.className = "fileTableRow";
+            newRow.id = fileID;
+            newRow.innerHTML = this.fileRowHTML(fileID, file.name, 
+                buttonsHTML.cancelSvg("bookPages.cancelUploadButton(\"" + fileID + "\")"), 
+                "/static/svg/new.svg");
+            table.appendChild(newRow);
             api.bookFilesNew[fileID] = file;
         }
     },
@@ -215,6 +223,7 @@ const bookPages = {
         let arrayIndex = api.bookFilesDelete.indexOf(fileID);
         api.bookFilesDelete.splice(arrayIndex, 1);
     },
+    // Get the url of the file icon from the file name
     fileIconUrl: function (fileName) {
         return "/fileicon/" + fileName.split(".").slice(-1) + ".svg";
     }
@@ -224,17 +233,17 @@ const bookPages = {
 const api = {
     // Empty book object
     emptyBook: {
-        "title": "",
-        "author": "",
-        "series": "",
-        "genre": "",
-        "isbn": "",
-        "releaseDate": "",
-        "publisher": "",
-        "language": "",
-        "files": [],
-        "hasCover": false,
-        "lastModified": 0
+        title: "",
+        author: "",
+        series: "",
+        genre: "",
+        isbn: "",
+        releaseDate: "",
+        publisher: "",
+        language: "",
+        files: [],
+        hasCover: false,
+        lastModified: 0
     },
     // Current book being viewed
     currentBook: this.emptyBook,
@@ -322,7 +331,6 @@ const api = {
             requestsCount++;
         }
         // File deletes
-        console.log(api.bookFilesDelete);
         for (let hashName of api.bookFilesDelete) {
             this.request("DELETE", "/api/file/delete/" + api.currentBookID + "/" + hashName, "delete", function (req) {
                 api.openPageIfDone();
@@ -362,7 +370,9 @@ const api = {
     get: function (bookID) {
         this.request("GET", "api/get/" + bookID, "get", function (req) {
             let book = JSON.parse(req.responseText);
-            book.files = book.files.splice(1);
+            // Convert the files object to a list of files
+            delete book.files.count;
+            book.files = Object.values(book.files);
             bookPages.viewBookShow(book);
         });
     },

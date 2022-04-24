@@ -14,13 +14,14 @@
     --button-color: #fff;
     --border-color: #707d8a;
     --text-color: #232629;
-    --form-background: #232629;
-    --form-border: #232629;
+    --form-background: #eee;
+    --form-border: #aaa;
     --selected-book: #3daee9;
     --page-selected: #3daee9;
     --icon-filter: brightness(100%) contrast(130%) invert(95%);
 }
-.breezeColorScheme input {
+.breezeColorScheme #controlsSearchContainer,
+.breezeColorScheme button {
     --text-color: #eff0f1;
 }
 

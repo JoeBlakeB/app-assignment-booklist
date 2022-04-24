@@ -7,43 +7,86 @@ const bookPages = {
         ["Title", "title"],
         ["Author", "author"],
         ["Series", "series"],
+        ["Description", "description", "textarea"],
         ["Genre", "genre"],
         ["ISBN", "isbn"],
         ["Publisher", "publisher"],
         ["Language", "language"],
-        ["Release Date", "releaseDate"]
+        ["Release Date", "releaseDate", "date"]
     ],
     errorStyle: "color: red;",
     // Create a new book
     new: function () {
-        let pageTop = buttonsHTML.backSvg() + buttonsHTML.saveSvg("api.new()") + "<h1>New Book</h1>";
         api.currentBook = api.emptyBook;
-        document.getElementById("detailsContainer").innerHTML = pageTop + this.bookEditHTML();
+        let fragment = document.createRange().createContextualFragment(
+            buttonsHTML.backSvg() + 
+            buttonsHTML.saveSvg("api.new()") + 
+            "<h1>New Book</h1>" + this.statusText);
+        fragment.appendChild(this.bookEditForm());
+        document.getElementById("detailsContainer").replaceChildren(fragment);
     },
     // Edit the current book
     edit: function () {
-        let pageTop = buttonsHTML.backSvg("openPage(\"view\", \"" + api.currentBookID + "\")") + buttonsHTML.saveSvg("api.edit()") + "<h1>Edit Book</h1>";
-        document.getElementById("detailsContainer").innerHTML = pageTop + this.bookEditHTML();
+        let fragment = document.createRange().createContextualFragment(
+            buttonsHTML.backSvg("openPage(\"view\", \"" + api.currentBookID + "\")") +
+            buttonsHTML.saveSvg("api.edit()") +
+            "<h1>Edit Book</h1>" + this.statusText);
+        fragment.appendChild(this.bookEditForm());
+        document.getElementById("detailsContainer").replaceChildren(fragment);
     },
     // Edit book HTML for new and edit books
-    bookEditHTML: function (book) {
-        // Form top
-        let form = this.statusText + "<form id='bookEditForm'>";
-        
+    bookEditForm: function () {
+        let form = document.createElement("form");
+        form.id = "bookEditForm";
         // Text book fields
-        for (let field of this.bookFields.slice(0, -1)) {
-            form += this.bookEditField(field[0], field[1]);
+        for (let field of this.bookFields) {
+            form.appendChild(this.label(field[0], field[1]));
+            let input;
+            if (field[2] == "textarea") {
+                input = document.createElement("textarea");
+            }
+            else if (field[2] == "date") {
+                input = document.createElement("input");
+                input.type = "date";
+            }
+            else {
+                input = document.createElement("input");
+                input.type = "text";
+            }
+            input.id = "form" + field[1];
+            input.name = field[1];
+            input.value = api.currentBook[field[1]];
+            input.className = "bookEditFormField bookEditFormInput";
+            form.appendChild(input);
         }
-        // date and end form
-        form += this.bookEditField("Release Date", "releaseDate", "date");
-        
-        form += "<label for='formCover'>Book Cover Image:</label><div ondragover='bookPages.coverDrop(event)' ondrop='bookPages.coverDrop(event)' id='coverUploadDiv'><div id='coverUploadInput'><input type='file' id='formCover' name='cover' accept='image/*' onchange='bookPages.coverChange(true)'><p id='formCoverFilename'></p><p onclick='bookPages.coverChange(false)' id='formCoverDelete'>"
-        if (api.currentBook.hasCover) {
-            form += "Remove Current Cover"
-        }
+        // Book Cover
         api.bookCoverAction = null;
-        form += "</p></div><div id='bookCoverPreview'>" + this.coverPreview() + "</div></div><label for='formFiles'>Book Files:</label>" + this.fileTableHTML("edit") + "</form>";
+        form.appendChild(this.label("Book Cover Image:", "Cover"));
+        let coverUploadDiv = document.createRange().createContextualFragment(
+            "<div ondragover='bookPages.coverDrop(event)'  \
+            ondrop='bookPages.coverDrop(event)' id='coverUploadDiv'> \
+            <div id='coverUploadInput'><input type='file' id='formCover' \
+            name='cover' accept='image/*' onchange='bookPages.coverChange(true)'> \
+            <p id='formCoverFilename'></p> \
+            <p onclick='bookPages.coverChange(false)' id='formCoverDelete'>" +
+            (function () {
+                if (api.currentBook.hasCover) {
+                    return "Remove Current Cover"; }
+                else { return ""; }
+            })() + "</p></div> \
+            <div id='bookCoverPreview'>" + this.coverPreview() + "</div></div>"
+        )
+        form.appendChild(coverUploadDiv); 
+        // File Upload
+        form.appendChild(this.label("Book Files:", "Files"));
+        form.append(this.fileTable("edit"));
         return form;
+    },
+    label: function (text, id) {
+        let label = document.createElement("label");
+        label.innerText = text;
+        label.htmlFor = "form" + id;
+        return label;
     },
     // Allow drag and drop into the entire book cover div
     coverDrop: function (event) {
@@ -67,9 +110,8 @@ const bookPages = {
         else if (api.bookCoverAction == "delete") {
             newImg = "<div><p>New:</p><img id='coverUploadPreview' src='/static/images/bookCoverPlaceholder.png'></div>";
         }
-
         return currentImg + newImg;
-    }, 
+    },
     // Called when a file is selected or when the remove text is clicked
     coverChange: function (newFile) {
         let fileInput = document.getElementById("formCover");
@@ -102,10 +144,6 @@ const bookPages = {
         // Generate new html for images
         document.getElementById("bookCoverPreview").innerHTML = this.coverPreview(fileInput.files[0]);
     },
-    // Used by bookEditHTML to get fields of data
-    bookEditField: function (label, field, type = "text") {
-        return "<label for='form" + field + "'>" + label + ":</label><input type='" + type + "' id='form" + field + "' name='" + field + "' value='" + api.currentBook[field] + "' class='bookEditFormField bookEditFormInput'>";
-    },
     // Tell the user that the view book page is loading, then call api.get
     viewBookLoading: function (bookID) {
         document.getElementById("detailsContainer").innerHTML = 
@@ -116,72 +154,127 @@ const bookPages = {
     // Show the book to the user
     viewBookShow: function (book) {
         api.currentBook = book;
-        let bookHTML = "";
-        // Generate HTML of information
+        let bookData = document.createElement("div");
+        bookData.className = "flexContainer";
+        let metadata = document.createElement("div");
+        metadata.className = "viewBookDivider bookMetadata";
+        // Header
+        metadata.innerHTML = buttonsHTML.backSvg() + 
+            buttonsHTML.editSvg("openPage(\"edit\", \"" + api.currentBookID + "\")") + 
+            buttonsHTML.deleteSvg("api.delete()") + 
+            "<h1>View Book</h1>" + this.statusText;
+        // Metadata
         for (let field of this.bookFields) {
             if (book[field[1]] != "" && book[field[1]]) {
-                bookHTML += "<h4 class='viewBook'>" + field[0] + ":</h4><h3 class='viewBook'>" + book[field[1]] + "</h3>";
+                for (let data of [["h4", field[0]],
+                                  ["h3", book[field[1]]]]) {
+                    let text = document.createElement(data[0]);
+                    text.innerText = data[1];
+                    text.className = "viewBook";
+                    metadata.appendChild(text);
+                }
             }
-        } 
-        bookHTML += "</div>";
-        // Book Cover
-        if (book.hasCover) {
-            bookHTML += "<div class='viewBookDivider coverDivider'><img class='viewCover' src='/book/cover/" + api.currentBookID + "?lastmodified=" + book.lastModified + "' ></div>";
         }
-        // Add to page
-        document.getElementById("detailsContainer").innerHTML = "<div class='flexContainer'><div class='viewBookDivider bookMetadata'>" + 
-            buttonsHTML.backSvg() + buttonsHTML.editSvg("openPage(\"edit\", \"" + api.currentBookID + "\")") + buttonsHTML.deleteSvg("api.delete()") +
-            "<h1>View Book</h1>" + this.statusText + bookHTML + "</div>" + this.fileTableHTML("view");
+        bookData.appendChild(metadata);
+        // Book Cover 
+        if (book.hasCover) {
+            let cover = document.createElement("div");
+            cover.className = "viewBookDivider coverDivider";
+            let img = document.createElement("img");
+            img.className = "viewCover";
+            img.src = "/book/cover/" + api.currentBookID + "?lastmodified=" + book.lastModified;
+            cover.appendChild(img);
+            bookData.appendChild(cover);
+        }
+        let detailsContainer = document.getElementById("detailsContainer");
+        detailsContainer.replaceChildren(bookData);
+        // Files
+        if (book.files.length) {
+            detailsContainer.appendChild(this.fileTable("view"));
+        }
     },
-    // Generate the file table html
-    fileTableHTML: function (page) {
-        let fileTable = "<table id='" + page + "FileTable' class='fileTable' ondragover='bookPages.fileDrop(event)' ondrop='bookPages.fileDrop(event)'>";
-        // Upload file button
+    // Generate the file table element
+    fileTable: function (page) {
+        let fileTable = document.createElement("table");
+        fileTable.id = page + "FileTable";
+        fileTable.className = "fileTable";
+        let table = document.createElement("tbody");
         if (page == "edit") {
+            fileTable.ondragover = bookPages.fileDrop;
+            fileTable.ondrop = bookPages.fileDrop;
+            // Upload file button
             api.bookFilesNew = { count: 1 };
             api.bookFilesDelete = [];
-            fileTable += "<td colspan='3'><input type='file' id='formFiles' name='files' onchange='bookPages.addFiles()' multiple><p id='fileUploadStats'></p></td>";
-        }
-        // Return if view and no files
-        else if (api.currentBook.files.length == 0) {
-            return "";
+            let td = document.createElement("td");
+            td.colSpan = 3;
+            let input = document.createElement("input");
+            input.type = "file";
+            input.id = "formFiles";
+            input.name = "File Upload";
+            input.onchange = bookPages.addFiles;
+            input.multiple = true;
+            td.appendChild(input);
+            let tr = document.createElement("tr");
+            tr.appendChild(td);
+            table.appendChild(tr);
         }
         // Row for each file
         for (let file of api.currentBook.files) {
-            fileTable += "<tr class='fileTableRow' id='" + file.hashName + "'>" + 
-                this.fileRowHTML(file.hashName, file.name, page, 
-                    this.fileIconUrl(file.name), file.size) + "</tr>";
+            table.append(this.fileRow(file.hashName, file.name,
+                    this.fileIconUrl(file.name), page, file.size));
         }
-        return fileTable + "</table>";
+        fileTable.appendChild(table);
+        return fileTable;
     },
     // Generate a row for the file table
-    fileRowHTML: function (fileID, fileName, type, image, fileSize=0) {
-        let fileTable = "<td><img class='fileIcon' src='" + image + "'></td>";
-        if (type == "view") {
-            fileTable += "<td class='fileName'><p>" + fileName + " (" + api.fileSize(fileSize) + ")</p></td><td>" + buttonsHTML.downloadSvg("window.open(\"/book/file/" + api.currentBookID + "/" + fileID + "\")");
+    fileRow: function (fileID, fileName, image, button, fileSize=0) {
+        let row = document.createElement("tr");
+        row.className = "fileTableRow";
+        row.id = fileID;
+        let tdIcon = document.createElement("td");
+        let icon = document.createElement("img");
+        icon.className = "fileIcon";
+        icon.src = image;
+        tdIcon.appendChild(icon);
+        row.appendChild(tdIcon);
+        let tdFileName = document.createElement("td");
+        tdFileName.className = "fileName";
+        let tdButton = document.createElement("td");
+        if (button == "view") {
+            let text = document.createElement("p");
+            text.innerText = fileName + " (" + api.fileSize(fileSize) + ")";
+            tdFileName.appendChild(text);
+            tdButton.innerHTML = buttonsHTML.downloadSvg("window.open(\"/book/file/" + api.currentBookID + "/" + fileID + "\")");
         }
         else {
-            fileTable += "<td class='fileName'><input type='text' class='bookEditFormInput' id='fileNameInput-" + fileID + "' value='" + fileName + "'></td><td>";
-            if (type == "edit") {
-                fileTable += buttonsHTML.deleteSvg("bookPages.deleteFileButton(\"" + fileID + "\")");
+            let input = document.createElement("input");
+            input.id = "fileNameInput-" + fileID;
+            input.className = "bookEditFormInput";
+            input.type = "text";
+            input.value = fileName;
+            tdFileName.appendChild(input);
+            if (button == "edit") {
+                tdButton.innerHTML = buttonsHTML.deleteSvg("bookPages.deleteFileButton(\"" + fileID + "\")");
             }
             else {
-                fileTable += type;
+                tdButton.innerHTML = buttonsHTML.cancelSvg("bookPages.cancelUploadButton(\"" + fileID + "\")");
             }
         }
-        return fileTable + "</td>";
+        row.appendChild(tdFileName);
+        row.appendChild(tdButton);
+        return row;
     },
     // Allow drag and drop into the entire book files table
     fileDrop: function (event) {
         event.preventDefault();
         if (event.dataTransfer.files.length) {
-            this.addFiles(Array.from(event.dataTransfer.files));
+            bookPages.addFiles(Array.from(event.dataTransfer.files), false);
         }
     },
     // A file has been added, add it to the table
-    addFiles: function (files=null) {
+    addFiles: function (files, button=true) {
         // Files were added via the button, not drag and drop
-        if (!files) {
+        if (button) {
             let fileInput = document.getElementById("formFiles");
             files = Array.from(fileInput.files);
             fileInput.value = null;
@@ -190,13 +283,8 @@ const bookPages = {
         let table = document.getElementById("editFileTable").firstChild;
         for (let file of files) {
             let fileID = "newFile" + api.bookFilesNew.count++;
-            let newRow = document.createElement("tr");
-            newRow.className = "fileTableRow";
-            newRow.id = fileID;
-            newRow.innerHTML = this.fileRowHTML(fileID, file.name, 
-                buttonsHTML.cancelSvg("bookPages.cancelUploadButton(\"" + fileID + "\")"), 
-                "/static/svg/new.svg");
-            table.appendChild(newRow);
+            table.appendChild(bookPages.fileRow(fileID, file.name, 
+                "/static/svg/new.svg"));
             api.bookFilesNew[fileID] = file;
         }
     },
@@ -236,6 +324,7 @@ const api = {
         title: "",
         author: "",
         series: "",
+        description: "",
         genre: "",
         isbn: "",
         releaseDate: "",

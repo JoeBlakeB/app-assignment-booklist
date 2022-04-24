@@ -19,7 +19,7 @@ testData = [
 ]
 
 bookDefaults = {
-    "title": "", "author": "", "series": "", "genre": "", "isbn": "", "releaseDate": "",
+    "title": "", "author": "", "series": "", "description": "", "genre": "", "isbn": "", "releaseDate": "",
     "publisher": "", "language": "", "files": {"count": 0}, "hasCover": False, "lastModified": 0
 }
 
@@ -221,6 +221,10 @@ class requestsTestsBase(unittest.TestCase):
         """Stop the server."""
         self.serverThread.terminate()
         tearDown(self)
+
+    def setUp(self):
+        """Wait before each test to stop connection refused"""
+        time.sleep(.2)
     
     def get(self, url, status="2", **qwargs):
         """HTTP GET and check its status starts with the status arg"""

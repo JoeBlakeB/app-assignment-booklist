@@ -18,7 +18,7 @@ except ModuleNotFoundError:
 
 class database:
     dataFilename = "data.json"
-    bookFields = ("title", "author", "series", "isbn", "releaseDate", "publisher", "language", "genre")
+    bookFields = ("title", "author", "series", "description", "isbn", "releaseDate", "publisher", "language", "genre")
     
     fullFilePath = lambda self, filename : os.path.join(self.dataDir, filename)
     bookFilePath = lambda self, bookID, filename="" : os.path.join(self.dataDir, "books", bookID, filename)

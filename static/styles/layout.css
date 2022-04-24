@@ -350,6 +350,9 @@ input#formCover[type="file"] {
     -webkit-box-orient: vertical;  
 }
 
+#formdescription {
+    resize: vertical;
+}
 
 /* File Table */
 

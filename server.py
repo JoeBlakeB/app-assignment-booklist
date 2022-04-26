@@ -22,7 +22,7 @@ def afterRequest(response):
 @booklist.route("/", methods=["GET"])
 def sendIndex():
     """Send the booklist page with body classes added based on cookies and user agent."""
-    userAgent = flask.request.headers.get('User-Agent').lower()
+    userAgent = str(flask.request.headers.get('User-Agent')).lower()
     if ("phone" in userAgent or "android" in userAgent) or (
             "mobile" in str(flask.request.cookies.get("uiLayout"))):
         bodyClasses = "mobileLayout"
@@ -205,6 +205,8 @@ def apiFileUpload(bookID, filename):
     if not db.bookGet(bookID):
         return {"success": False, "hashName": None}, 404
     data = flask.request.get_data()
+    if len(data) > booklist.config['MAX_CONTENT_LENGTH']:
+        return {"success": False, "hashName": None}, 413
     if data:
         hashName = db.fileAdd(bookID, filename, data)
         if hashName:

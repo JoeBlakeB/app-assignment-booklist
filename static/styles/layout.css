@@ -264,6 +264,14 @@ h2, h3:not(.layoutExample h3), h4, form {
     clear: left;
 }
 
+.hidden {
+    display: none;
+}
+
+.error {
+    color: red;
+}
+
 /* Book edit form */
 .bookEditFormInput, #coverUploadDiv, .fileTable {
     background-color: var(--form-background);

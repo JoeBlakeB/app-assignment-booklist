@@ -13,7 +13,7 @@ var currentPage = "none";
 // showWarning show a warning if leaving page new or edit (optional, true by default)
 function openPage(page, bookID=0, showWarning=true) {
     if (page == currentPage && page != "view") { return; }
-    if ((currentPage == "new" || currentPage == "edit") && showWarning) {
+    if ((currentPage == "new" || currentPage == "edit") && showWarning && api.hasChanges()) {
         if (!confirm ("Are you sure you want to leave without saving?")) { return; }
     }
     // Change selected book on search

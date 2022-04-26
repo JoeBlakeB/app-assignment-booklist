@@ -2,7 +2,7 @@
 
 // Functions for generating and using the book pages
 const bookPages = {
-    statusText: "<h3 id='statusText' style='display:none;'></h3>",
+    statusText: "<h3 id='statusText' class='hidden'></h3>",
     bookFields: [
         ["Title", "title"],
         ["Author", "author"],
@@ -14,7 +14,6 @@ const bookPages = {
         ["Language", "language"],
         ["Release Date", "releaseDate", "date"]
     ],
-    errorStyle: "color: red;",
     // Create a new book
     new: function () {
         api.currentBook = api.emptyBook;
@@ -189,7 +188,13 @@ const bookPages = {
         let detailsContainer = document.getElementById("detailsContainer");
         detailsContainer.replaceChildren(bookData);
         // Files
-        if (book.files.length) {
+        if (api.requestsCount >= 0) {
+            let uploadStatus = document.createElement("h3");
+            uploadStatus.id = "uploadStatus";
+            uploadStatus.innerText = "Uploading files...";
+            detailsContainer.appendChild(uploadStatus);
+        }
+        else if (book.files.length) {
             detailsContainer.appendChild(this.fileTable("view"));
         }
     },
@@ -210,7 +215,7 @@ const bookPages = {
             let input = document.createElement("input");
             input.type = "file";
             input.id = "formFiles";
-            input.name = "File Upload";
+            input.name = "files";
             input.onchange = bookPages.addFiles;
             input.multiple = true;
             td.appendChild(input);
@@ -282,10 +287,15 @@ const bookPages = {
         // Add them to the HTML
         let table = document.getElementById("editFileTable").firstChild;
         for (let file of files) {
-            let fileID = "newFile" + api.bookFilesNew.count++;
-            table.appendChild(bookPages.fileRow(fileID, file.name, 
-                "/static/svg/new.svg"));
-            api.bookFilesNew[fileID] = file;
+            if (file.size < 64 * 1024 * 1024) {
+                let fileID = "newFile" + api.bookFilesNew.count++;
+                table.appendChild(bookPages.fileRow(fileID, file.name, 
+                    "/static/svg/new.svg"));
+                api.bookFilesNew[fileID] = file;
+            }
+            else {
+                alert("File too large, the maximum size is 64 MB and " + file.name + " is " + api.fileSize(file.size));
+            }
         }
     },
     // Remove a new file from the table and api.bookFilesNew
@@ -337,10 +347,19 @@ const api = {
     // Current book being viewed
     currentBook: this.emptyBook,
     currentBookID: 0,
-    requestsCount: 0,
+    requestsCount: -1,
     bookCoverAction: null,
-    bookFilesNew: {},
+    bookFilesNew: { count: 1 },
     bookFilesDelete: [],
+    // Return a bool for if any of the books data has been changed
+    hasChanges: function () {
+        console.log(JSON.stringify(api.getData()) == "{}", api.bookCoverAction == null, api.bookFilesNew.count == 1, api.bookFilesDelete.length == 0)
+        console.log(api.bookFilesNew.count);
+        return !(JSON.stringify(api.getData()) == "{}" &&
+            api.bookCoverAction == null &&
+            api.bookFilesNew.count == 1 &&
+            api.bookFilesDelete.length == 0);
+    },
     // Upload a new book to the server, then open that book
     new: function () {
         this.upload("POST", "/api/new");
@@ -348,24 +367,36 @@ const api = {
     edit: function () {
         this.upload("PUT", "/api/edit/" + this.currentBookID);
     },
+    // Get book data from form
+    getData: function () {
+        let book = {};
+        let fields = document.getElementsByClassName("bookEditFormField");
+        for (let field of fields) {
+            if (api.currentBook[field.name] != field.value) {
+                book[field.name] = field.value;
+            }
+        }
+        return book;
+    },
     // Create a new book or edit an existing one
     upload: function (method, url) {
         // Dont send another request if already uploading
         let uploadStatusMessage = "Uploading book...";
         let status = document.getElementById("statusText");
-        if (status.style.length == 0) {
+        if (status.className == 0) {
             return;
         }
 
         // Tell user that book is being uploaded
-        status.style = "";
+        status.className = "";
         status.innerText = uploadStatusMessage;
 
-        // Get book data from form
-        const book = {};
-        const fields = document.getElementsByClassName("bookEditFormField");
-        for (let field of fields) {
-            book[field.name] = field.value;
+        let book = this.getData();
+        // Skip metadata upload if none of the metadata has been changed
+        if (JSON.stringify(book) == "{}") {
+            api.requestsCount = api.uploadFiles();
+            api.openPageIfDone(true);
+            return;
         }
 
         // Upload book to the server
@@ -378,12 +409,12 @@ const api = {
             // Upload Files
             api.requestsCount = api.uploadFiles();
             // Open book if no other requests
-            api.openPageIfDone();
+            api.openPageIfDone(true);
         }, JSON.stringify(book), "application/json;charset=UTF-8");
     },
     // Go back to view only when all requests are complete
-    openPageIfDone: function () {
-        if (--api.requestsCount <= 0) {
+    openPageIfDone: function (force=false) {
+        if (--api.requestsCount < 0 || force) {
             openPage("view", api.currentBookID, false);
             search.search(search.currentPage, false);
         }
@@ -394,13 +425,13 @@ const api = {
         // Book cover
         if (api.bookCoverAction == "upload") {
             let coverFile = document.getElementById("formCover").files[0];
-            this.request("PUT", "/api/cover/" + api.currentBookID + "/upload", "upload", function (req) {
+            this.request("PUT", "/api/cover/" + api.currentBookID + "/upload", "uploadFile", function (req) {
                 api.openPageIfDone();
             }, coverFile, coverFile.type);
             requestsCount++;
         }
         else if (api.bookCoverAction == "delete") {
-            this.request("DELETE", "/api/cover/" + api.currentBookID + "/delete", "delete", function (req) {
+            this.request("DELETE", "/api/cover/" + api.currentBookID + "/delete", "deleteFile", function (req) {
                 api.openPageIfDone();
             });
             requestsCount++;
@@ -414,14 +445,14 @@ const api = {
             if (!fileName.endsWith(fileExtention)) {
                 fileName += fileExtention
             }
-            this.request("POST", "/api/file/upload/" + api.currentBookID + "/" + fileName, "upload", function (req) {
+            this.request("POST", "/api/file/upload/" + api.currentBookID + "/" + fileName, "uploadFile", function (req) {
                 api.openPageIfDone();
             }, file, file.type);
             requestsCount++;
         }
         // File deletes
         for (let hashName of api.bookFilesDelete) {
-            this.request("DELETE", "/api/file/delete/" + api.currentBookID + "/" + hashName, "delete", function (req) {
+            this.request("DELETE", "/api/file/delete/" + api.currentBookID + "/" + hashName, "deleteFile", function (req) {
                 api.openPageIfDone();
             });
             requestsCount++;
@@ -438,7 +469,7 @@ const api = {
         }
         fileRenames = JSON.stringify(fileRenames)
         if (fileRenames != "{}") {
-            this.request("POST", "/api/file/rename/" + api.currentBookID, "fileRename", function (req) {
+            this.request("POST", "/api/file/rename/" + api.currentBookID, "renameFile", function (req) {
                 api.openPageIfDone();
             }, fileRenames, "application/json;charset=UTF-8");
             requestsCount++;
@@ -475,7 +506,7 @@ const api = {
         }
         // Check user didnt missclick then delete book
         if (confirm("Are you sure you want to delete \"" + this.currentBook.title + "\"?")) {
-            status.style = "";
+            status.className = "";
             status.innerText = delStatusMessage;
 
             this.request("DELETE", "api/delete/" + this.currentBookID, "delete", function () {
@@ -492,8 +523,38 @@ const api = {
                 if (req.status == 200) {
                     onSuccess(req);
                 }
+                // User understandable error messages
                 else {
-                    api.errorMessage(req, action, data);
+                    api.requestsCount--;
+                    console.log(req.status, action)
+                    if (action == "search") {
+                        let bookList = document.getElementById("listContainer");
+                        bookList.innerHTML = "<h3 id='bookListStatusText'>Loading books...</h3>";
+                        var status = bookList.firstChild;
+                    }
+                    else if (action.includes("File")) {
+                        var status = document.getElementById("uploadStatus");
+                    }
+                    else {
+                        var status = document.getElementById("statusText");
+                    }
+                    status.className = "error";
+                    if (action == "upload" && 
+                        document.getElementById("formtitle").value.length == 0) {
+                        status.innerText = "You must enter a book title.";
+                    }
+                    else if (req.status == 404 && action != "deleteFile") {
+                        status.innerText = "Error 404: Book not found.";
+                    }
+                    else if (action == "uploadFile") {
+                        status.innerText = "File upload has failed.";
+                    }
+                    else if (req.status == 0) {
+                        status.innerText = "Error: Could not connect to the server.";
+                    }
+                    else {
+                        status.innerText = "Error " + req.status + ": " + req.statusText;
+                    }
                 }
             }
         };
@@ -505,30 +566,6 @@ const api = {
         else {
             req.setRequestHeader("Content-Type", contentType);
             req.send(data);
-        }
-    },
-    // User understandable error messages
-    errorMessage: function (req, action, book={}) {
-        if (action == "search") {
-            let bookList = document.getElementById("listContainer");
-            bookList.innerHTML = "<h3 id='bookListStatusText'>Loading books...</h3>";
-            var status = bookList.firstChild;
-        }
-        else {
-            var status = document.getElementById("statusText");
-        }
-        status.style = "color: red;";
-        if (action == "upload" && book.title == undefined) {
-            status.innerText = "You must enter a book title.";
-        }
-        else if (req.status == 404) {
-            status.innerText = "Error 404: Book not found.";
-        }
-        else if (req.status == 0) {
-            status.innerText = "Error: Could not connect to the server.";
-        }
-        else {
-            status.innerText = "Error " + req.status + ": " + req.statusText;
         }
     },
     fileSize: function (size) {

@@ -4,15 +4,15 @@
 const bookPages = {
     statusText: "<h3 id='statusText' class='hidden'></h3>",
     bookFields: [
-        ["Title", "title"],
-        ["Author", "author"],
-        ["Series", "series"],
-        ["Description", "description", "textarea"],
-        ["Genre", "genre"],
-        ["ISBN", "isbn"],
-        ["Publisher", "publisher"],
-        ["Language", "language"],
-        ["Release Date", "releaseDate", "date"]
+        ["Title",        "title",       "64"],
+        ["Author",       "author",      "64"],
+        ["Series",       "series",      "64"],
+        ["Description",  "description", "2048", "textarea"],
+        ["Genre",        "genre",       "64"],
+        ["ISBN",         "isbn",        "20"],
+        ["Publisher",    "publisher",   "64"],
+        ["Language",     "language",    "32"],
+        ["Release Date", "releaseDate", "", "date"]
     ],
     // Create a new book
     new: function () {
@@ -41,10 +41,10 @@ const bookPages = {
         for (let field of this.bookFields) {
             form.appendChild(this.label(field[0], field[1]));
             let input;
-            if (field[2] == "textarea") {
+            if (field[3] == "textarea") {
                 input = document.createElement("textarea");
             }
-            else if (field[2] == "date") {
+            else if (field[3] == "date") {
                 input = document.createElement("input");
                 input.type = "date";
             }
@@ -56,6 +56,7 @@ const bookPages = {
             input.name = field[1];
             input.value = api.currentBook[field[1]];
             input.className = "bookEditFormField bookEditFormInput";
+            input.maxLength = field[2];
             form.appendChild(input);
         }
         // Book Cover
@@ -353,8 +354,6 @@ const api = {
     bookFilesDelete: [],
     // Return a bool for if any of the books data has been changed
     hasChanges: function () {
-        console.log(JSON.stringify(api.getData()) == "{}", api.bookCoverAction == null, api.bookFilesNew.count == 1, api.bookFilesDelete.length == 0)
-        console.log(api.bookFilesNew.count);
         return !(JSON.stringify(api.getData()) == "{}" &&
             api.bookCoverAction == null &&
             api.bookFilesNew.count == 1 &&

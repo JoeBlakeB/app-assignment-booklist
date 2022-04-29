@@ -8,7 +8,6 @@ import time
 from database import database
 
 booklist = flask.Flask(__name__, template_folder=".")
-booklist.config["TEMPLATES_AUTO_RELOAD"] = True
 booklist.config['MAX_CONTENT_LENGTH'] = 64 * 1024 * 1024
 booklist.url_map.strict_slashes = False
 

@@ -348,14 +348,17 @@ input#formCover[type="file"] {
 
 #formCoverFilename {
     width: 140px;
+}
+
+#formCoverFilename, .fileName p, #bookList p {
     text-overflow: ellipsis;
-    overflow: hidden; 
+    overflow: hidden;
     max-lines: 3;
     display: -webkit-box;
     line-clamp: 3;
     box-orient: vertical;
     -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;  
+    -webkit-box-orient: vertical;
 }
 
 #formdescription {
@@ -390,8 +393,11 @@ table.fileTable tr:not(:last-child) > * {
     opacity: 0.4;
 }
 
-.fileName {
-    width: 100%;
+.fileName p {
+    overflow-wrap: anywhere;
+    max-lines: 2;
+    line-clamp: 2;
+    -webkit-line-clamp: 2;
 }
 
 .fileIcon {

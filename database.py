@@ -19,6 +19,17 @@ except ModuleNotFoundError:
 class database:
     dataFilename = "data.json"
     bookFields = ("title", "author", "series", "description", "isbn", "releaseDate", "publisher", "language", "genre")
+    maxLengths = {
+        "title": 64,
+        "author": 64,
+        "series": 64,
+        "description": 2048,
+        "isbn": 20,
+        "releaseDate": 10,
+        "publisher": 64,
+        "language": 32,
+        "genre": 64
+    }
     
     fullFilePath = lambda self, filename : os.path.join(self.dataDir, filename)
     bookFilePath = lambda self, bookID, filename="" : os.path.join(self.dataDir, "books", bookID, filename)
@@ -81,7 +92,7 @@ class database:
         newBook = {"files": {"count": 0}, "hasCover": False, "lastModified": 0}
         for field in self.bookFields:
             if field in bookData:
-                newBook[field] = bookData[field]
+                newBook[field] = bookData[field][:self.maxLengths[field]]
             else:
                 newBook[field] = ""
 
@@ -96,7 +107,7 @@ class database:
         """Edit bookIDs data in the fields in of newData"""
         for field in self.bookFields:
             if field in newData:
-                self.data[bookID][field] = newData[field]
+                self.data[bookID][field] = newData[field][:self.maxLengths[field]]
         self.modified(bookID)
 
     def bookGet(self, bookID, search=False):

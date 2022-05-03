@@ -51,7 +51,8 @@ def bookCover(bookID, size):
     if db.coverExists(bookID):
         coverFilename = db.bookFilePath(bookID, f"cover{size}.jpg")
         if os.path.exists(coverFilename):
-            return flask.send_file(coverFilename)
+            return flask.send_file(coverFilename, download_name=db.safeFilename(
+                db.bookGet(bookID)['title']) + f"_cover{size}.jpg")
     # If book doesnt exist or if book doesnt have cover
     return flask.send_file(f"static/images/bookCoverPlaceholder{size}.png"), 404
 

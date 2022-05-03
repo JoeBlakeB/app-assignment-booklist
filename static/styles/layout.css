@@ -450,10 +450,12 @@ table.fileTable tr:not(:last-child) > * {
 
 .fileTableRow td:first-child {
     padding-left: 4px;
+    width: 60px;
 }
 
 .fileTableRow td:last-child {
     padding-right: 4px;
+    width: 50px;
 }
 
 #fileUploadStats, #formFiles {

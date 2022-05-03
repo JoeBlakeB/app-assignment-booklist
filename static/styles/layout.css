@@ -90,7 +90,7 @@ button, input[type="file"]::file-selector-button {
     fill: var(--button-color);
 }
 
-button, #controlsSearchContainer, input[type="file"]::file-selector-button {
+button, #controlsSearchContainer, input[type="file"]::file-selector-button, .searchInput {
     background: var(--button-background);
     border: 2px solid var(--button-accent);
     border-radius: 10px;
@@ -239,6 +239,44 @@ table#bookList .Cover img {
     top: 3px;
     left: 0;
     filter: var(--icon-filter);
+}
+
+h2.searchSettings {
+    margin: 20px 8px 8px 8px;
+}
+
+div.searchSettings {
+    margin: 8px;
+}
+
+.searchSettings h3 {
+    display: inline;
+    position: relative;
+}
+
+.searchSettings .searchInput {
+    margin: 8px 2px;
+}
+
+.searchShowTime h3 {
+    bottom: 4px;
+}
+
+.searchBooksPerPage h3 {
+    top: 2px;
+}
+
+#searchShowTime {
+    width: 24px;
+    height: 24px;
+}
+
+#searchBooksPerPage {
+    position: relative;
+    width: 64px;
+    height: 24px;
+    border-radius: 2px;
+    color: var(--button-color);
 }
 
 /* Display only one container on mobile layout */

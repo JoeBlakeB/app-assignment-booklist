@@ -424,13 +424,13 @@ const api = {
         // Book cover
         if (api.bookCoverAction == "upload") {
             let coverFile = document.getElementById("formCover").files[0];
-            this.request("PUT", "/api/cover/" + api.currentBookID + "/upload", "uploadFile", function (req) {
+            this.request("PUT", "/api/cover/" + api.currentBookID + "/upload", "uploadFile", function () {
                 api.openPageIfDone();
             }, coverFile, coverFile.type);
             requestsCount++;
         }
         else if (api.bookCoverAction == "delete") {
-            this.request("DELETE", "/api/cover/" + api.currentBookID + "/delete", "deleteFile", function (req) {
+            this.request("DELETE", "/api/cover/" + api.currentBookID + "/delete", "deleteFile", function () {
                 api.openPageIfDone();
             });
             requestsCount++;
@@ -444,14 +444,14 @@ const api = {
             if (!fileName.endsWith(fileExtention)) {
                 fileName += fileExtention
             }
-            this.request("POST", "/api/file/upload/" + api.currentBookID + "/" + fileName, "uploadFile", function (req) {
+            this.request("POST", "/api/file/upload/" + api.currentBookID + "/" + fileName, "uploadFile", function () {
                 api.openPageIfDone();
             }, file, file.type);
             requestsCount++;
         }
         // File deletes
         for (let hashName of api.bookFilesDelete) {
-            this.request("DELETE", "/api/file/delete/" + api.currentBookID + "/" + hashName, "deleteFile", function (req) {
+            this.request("DELETE", "/api/file/delete/" + api.currentBookID + "/" + hashName, "deleteFile", function () {
                 api.openPageIfDone();
             });
             requestsCount++;
@@ -468,7 +468,7 @@ const api = {
         }
         fileRenames = JSON.stringify(fileRenames)
         if (fileRenames != "{}") {
-            this.request("POST", "/api/file/rename/" + api.currentBookID, "renameFile", function (req) {
+            this.request("POST", "/api/file/rename/" + api.currentBookID, "renameFile", function () {
                 api.openPageIfDone();
             }, fileRenames, "application/json;charset=UTF-8");
             requestsCount++;
@@ -480,7 +480,7 @@ const api = {
     fileFromHashName: function (hashName) {
         for (let book of this.currentBook.files) {
             if (book.hashName == hashName) {
-                return book
+                return book;
             }
         }
         return null;
@@ -582,19 +582,18 @@ const api = {
 const search = {
     currentPage: 0,
     lastPage: 1,
-    booksPerPage: 25,
     // Search button or DOMContentLoaded
     search: function (page=0, tellUser=true) {
         if (tellUser) {
             document.getElementById("listContainer").innerHTML = "<h3 id='bookListStatusText'>Loading books...</h3>";
         }
         if (typeof page === "object") {
-            page = 0
+            page = 0;
         }
         search.currentPage = page;
-        let offset = search.booksPerPage * page;
+        let offset = settings.searchBooksPerPage * page;
         let query = document.getElementById("controlsSearchText").value;
-        api.request("GET", "api/search?q=" + query + "&limit=" + search.booksPerPage + "&offset=" + offset, "search", function (req) {
+        api.request("GET", "api/search?q=" + query + "&limit=" + settings.searchBooksPerPage + "&offset=" + offset, "search", function (req) {
             search.showResults(JSON.parse(req.responseText));
         });
     },
@@ -648,12 +647,14 @@ const search = {
             if (length < response.total) {
                 info.innerText += response.first + " to " + response.last + " of ";
             }
-            info.innerText += response.total + " books"
+            info.innerText += response.total + " books";
         }
         else {
-            info.innerText = "Your search did not match any books."
+            info.innerText = "Your search did not match any books.";
         }
-        info.innerText += " (" + response.time + "ms)";
+        if (settings.searchShowTime) {
+            info.innerText += " (" + response.time + "ms)";
+        }
         fragment.appendChild(info);
 
         // Page selector
@@ -669,7 +670,7 @@ const search = {
         let menu = document.createElement("menu");
         menu.id = "pageSelector";
         let currentPage = this.currentPage + 1;
-        this.lastPage = Math.ceil(total / this.booksPerPage);
+        this.lastPage = Math.ceil(total / settings.searchBooksPerPage);
         let pageButtons = 5;
 
         menu.appendChild(this.pageButton("<"));
@@ -742,9 +743,7 @@ const search = {
     }
 };
 
-// Empty search on page load
-document.addEventListener("DOMContentLoaded", search.search);
-
+// Search when enter is pressed
 document.getElementById("controlsSearchText").addEventListener("keyup", function (event) {
     if (event.key === "Enter") {
         search.search();

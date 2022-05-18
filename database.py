@@ -133,18 +133,36 @@ class database:
         if os.path.exists(bookPath):
             shutil.rmtree(bookPath)
         del self.data[bookID]
-
+    
     def bookSearch(self, query):
-        """Returns a list of bookIDs for if the query is in the books data"""
-        queryList = query.lower().split()
-        results = []
+        """Returns an ordered list of bookIDs for if the query"""
+        # Get a number for how much a book matches a query
+        # {bookID: int} - higher is more relevant
+        query = query.lower()
+        results = {}
         for bookID in list(self.data.keys())[::-1]:
-            for word in queryList:
-                if word in str(list(self.data[bookID].values())[2:]).lower():
-                    results.append(bookID)
-                    break
+            relevance = 0
+            for field in list(self.data[bookID].values())[3:]:
+                field = field.lower()
+                # query in field - +wordLength per word
+                for queryWord in query.split(" "):
+                    relevance += int(queryWord in field) * len(queryWord)
+                # field in query - +15 per field
+                relevance += int(field in query and len(field) != 0) * 15
+            results[bookID] = relevance
+            
+        # Order the list of results
+        resultsOrdered = []
+        minRelevancy = len(query) * 0.75
 
-        return results
+        for bookID, relevance in sorted(results.items(), 
+                key=lambda item: item[1], reverse=True):
+            if relevance > minRelevancy:
+                resultsOrdered.append(bookID)
+            else:
+                break
+
+        return resultsOrdered
 
     def coverAdd(self, bookID, originalImage):
         """Take an images binary data and save it as the book covers images"""

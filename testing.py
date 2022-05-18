@@ -205,15 +205,21 @@ class requestsTestsBase(unittest.TestCase):
     port = 8081
     baseUrl = f"http://{host}:{port}"
 
+    def startServer(self, tempDataDir, data):
+        """Start server in seperate thread in main file to stop pickle error in windows"""
+        self.booklist = server.booklist
+        server.db = database.database(tempDataDir)
+        server.db.data = data
+        self.booklist.run(host=requestsTestsBase.host, port=requestsTestsBase.port)
+
     @classmethod
     def setUpClass(self):
         """Start the server for the requests tests."""
         setUp(self)
-        self.booklist = server.booklist
         server.db = database.database(self.tempDataDir)
         server.db.data = self.data
         self.serverThread = multiprocessing.Process(
-            target=lambda: self.booklist.run(host=self.host, port=self.port))
+            target=self.startServer, args=(self, self.tempDataDir, self.data))
         self.serverThread.start()
 
     @classmethod
@@ -254,8 +260,13 @@ class requestsTestsBase(unittest.TestCase):
 class requestsDataTests(requestsTestsBase):
     """Tests for the server using requests, 
     a multiprocessing manager is used for direct access to the servers data"""
-    data = multiprocessing.Manager().dict()
     server.fileIcons = server.fileIconsDict()
+
+    @classmethod
+    def setUpClass(self):
+        """Start the server for the requests tests."""
+        self.data = multiprocessing.Manager().dict()
+        super().setUpClass()
 
     def testIndex(self):
         """Test that the index is send without any errors."""

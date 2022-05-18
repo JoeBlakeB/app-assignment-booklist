@@ -297,9 +297,24 @@ h1 {
     display:grid;
 }
 
-h2, h3:not(.layoutExample h3), h4, form {
+h2, h3:not(.layoutExample h3), h4, p, form {
     margin: 8px;
     clear: left;
+}
+
+p.viewBook:not(.description) {
+    font-size: 1.23em;
+    font-weight: bold;
+}
+
+p.viewBook {
+    margin-top: 2px;
+    margin-bottom: 12px;
+}
+
+h4.viewBook {
+    margin-top: 12px;
+    margin-bottom: 3px;
 }
 
 .hidden {
@@ -308,6 +323,37 @@ h2, h3:not(.layoutExample h3), h4, form {
 
 .error {
     color: red;
+}
+
+/* Book view */
+
+.flexContainer {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.viewBookDivider {
+    display: inline-block;
+}
+
+.viewBookDivider.bookMetadata {
+    flex-grow: 1;
+}
+
+/* Force image to be on right if window is big enough */
+
+@media not screen and (max-width: 1800px) {
+    .desktopLayout .viewBookDivider.bookMetadata {
+        max-width: calc(100% - 420px);
+    }
+}
+
+@media not screen and (max-width: 900px) {
+    .mobileLayout .viewBookDivider.bookMetadata {
+        max-width: calc(100% - 420px);
+    }
 }
 
 /* Book edit form */
@@ -332,21 +378,6 @@ h2, h3:not(.layoutExample h3), h4, form {
     max-width: calc(100% - 16px);
     min-width: 200px;
     max-height: 800px;
-}
-
-.flexContainer {
-    width: 100%;
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-}
-
-.viewBookDivider {
-    display: inline-block;
-}
-
-.viewBookDivider.bookMetadata {
-    flex-grow: 1;
 }
 
 #bookCoverPreview img {

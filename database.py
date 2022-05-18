@@ -142,11 +142,16 @@ class database:
         results = {}
         for bookID in list(self.data.keys())[::-1]:
             relevance = 0
-            for field in list(self.data[bookID].values())[3:]:
+            for fieldName, field in self.data[bookID].items():
+                # skip fields that dont need to be checked
+                if fieldName in ("files", "hasCover", "lastModified"):
+                    continue
                 field = field.lower()
                 # query in field - +wordLength per word
+                # except description which is wordLength divided by 4
                 for queryWord in query.split(" "):
-                    relevance += int(queryWord in field) * len(queryWord)
+                    relevance += int(queryWord in field) * (len(queryWord)
+                                / (1 + (3 * bool(fieldName == "description"))))
                 # field in query - +15 per field
                 relevance += int(field in query and len(field) != 0) * 15
             results[bookID] = relevance

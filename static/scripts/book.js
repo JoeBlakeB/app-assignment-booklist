@@ -166,11 +166,11 @@ const bookPages = {
         // Metadata
         for (let field of this.bookFields) {
             if (book[field[1]] != "" && book[field[1]]) {
-                for (let data of [["h4", field[0]],
-                                  ["h3", book[field[1]]]]) {
+                for (let data of [["h4", field[0] + ":"],
+                                  ["p", book[field[1]]]]) {
                     let text = document.createElement(data[0]);
                     text.innerText = data[1];
-                    text.className = "viewBook";
+                    text.className = "viewBook " + field[1];
                     metadata.appendChild(text);
                 }
             }

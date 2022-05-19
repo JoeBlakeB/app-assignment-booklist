@@ -20,15 +20,15 @@ class database:
     dataFilename = "data.json"
     bookFields = ("title", "author", "series", "description", "isbn", "releaseDate", "publisher", "language", "genre")
     maxLengths = {
-        "title": 64,
-        "author": 64,
-        "series": 64,
-        "description": 2048,
-        "isbn": 20,
+        "title": 192,
+        "author": 128,
+        "series": 128,
+        "description": 4096,
+        "isbn": 256,
         "releaseDate": 10,
-        "publisher": 64,
-        "language": 32,
-        "genre": 64
+        "publisher": 128,
+        "language": 64,
+        "genre": 128
     }
     
     fullFilePath = lambda self, filename : os.path.join(self.dataDir, filename)

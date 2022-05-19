@@ -4,14 +4,14 @@
 const bookPages = {
     statusText: "<h3 id='statusText' class='hidden'></h3>",
     bookFields: [
-        ["Title",        "title",       "64"],
-        ["Author",       "author",      "64"],
-        ["Series",       "series",      "64"],
-        ["Description",  "description", "2048", "textarea"],
-        ["Genre",        "genre",       "64"],
-        ["ISBN",         "isbn",        "20"],
-        ["Publisher",    "publisher",   "64"],
-        ["Language",     "language",    "32"],
+        ["Title",        "title",       "192"],
+        ["Author",       "author",      "128"],
+        ["Series",       "series",      "128"],
+        ["Description",  "description", "4096", "textarea"],
+        ["Genre",        "genre",       "128"],
+        ["ISBN",         "isbn",        "256"],
+        ["Publisher",    "publisher",   "128"],
+        ["Language",     "language",    "64"],
         ["Release Date", "releaseDate", "", "date"]
     ],
     // Create a new book
@@ -288,14 +288,14 @@ const bookPages = {
         // Add them to the HTML
         let table = document.getElementById("editFileTable").firstChild;
         for (let file of files) {
-            if (file.size < 64 * 1024 * 1024) {
+            if (file.size < 256 * 1024 * 1024) {
                 let fileID = "newFile" + api.bookFilesNew.count++;
                 table.appendChild(bookPages.fileRow(fileID, file.name, 
                     "/static/svg/new.svg"));
                 api.bookFilesNew[fileID] = file;
             }
             else {
-                alert("File too large, the maximum size is 64 MB and " + file.name + " is " + api.fileSize(file.size));
+                alert("File too large, the maximum size is 256 MB and " + file.name + " is " + api.fileSize(file.size));
             }
         }
     },

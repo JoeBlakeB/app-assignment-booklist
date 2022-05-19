@@ -407,16 +407,17 @@ h4.viewBook {
 }
 
 input#formCover[type="file"]::file-selector-button {
-    width: 140px;
+    width: 160px;
 }
 
 input#formCover[type="file"] {
-    width: 148px;
+    width: 168px;
     margin-right: 4px;
 }
 
 #formCoverFilename {
-    width: 140px;
+    width: 160px;
+    overflow-wrap: anywhere;
 }
 
 #formCoverFilename, .fileName p, #bookList p {

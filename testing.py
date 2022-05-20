@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2022 JoeBlakeB
+# All Rights Reserved
 
 import hashlib
 import json

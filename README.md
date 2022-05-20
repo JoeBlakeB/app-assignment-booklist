@@ -8,7 +8,7 @@ To start the server run:
 
 `./server.py`
 
-The default host is `0.0.0.0` and port is `80` and you can change it with the `--host` and `-port`:
+The default host is `0.0.0.0` and port is `80` and you can change it with the `--host` and `--port`:
 
 `./server.py --host 127.0.0.1 --port 8080`
 
@@ -32,6 +32,7 @@ To stop the server send a KeyboardInterrupt (ctrl + C).
 
 ## Misc
 
+- Copyright © JoeBlakeB (Joe Baker), All Rights Reserved
 - Server tested with Python 3.10.4 on Linux and Windows
 - Client tested with Firefox and Chrome on Linux, Windows, and Android
 - Button icon SVGs from [Papirus Icon Theme](https://github.com/PapirusDevelopmentTeam/papirus-icon-theme)

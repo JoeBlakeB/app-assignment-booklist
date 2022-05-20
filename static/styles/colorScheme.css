@@ -1,4 +1,7 @@
 /* 
+ * Copyright (c) 2022 JoeBlakeB
+ * All Rights Reserved
+ *
  * Themes must be added to:
  *  server.py - sendIndex - if uiTheme in [...]:
  *  static/scripts/settings.js - settings.colorSchemes

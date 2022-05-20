@@ -1,3 +1,6 @@
+// Copyright (c) 2022 JoeBlakeB
+// All Rights Reserved
+
 "use strict";
 
 // Functions for generating and using the book pages

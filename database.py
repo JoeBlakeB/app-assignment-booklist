@@ -1,3 +1,6 @@
+# Copyright (c) 2022 JoeBlakeB
+# All Rights Reserved
+
 import hashlib
 import io
 import json

@@ -1,3 +1,6 @@
+// Copyright (c) 2022 JoeBlakeB
+// All Rights Reserved
+
 "use strict";
 
 var currentPage = "none";

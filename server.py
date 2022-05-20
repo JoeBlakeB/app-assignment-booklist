@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2022 JoeBlakeB
+# All Rights Reserved
 
 import flask
 import os
@@ -244,6 +246,7 @@ def apiFileDelete(bookID, hashName):
 if __name__ == "__main__":
     if "--help" in sys.argv:
         print("Joe Baker's APP Assignment BookList")
+        print("All Rights Reserved Copyright (c) 2022 JoeBlakeB")
         print("Usage: ./server.py [options]")
         print("Options:")
         print("  --help            Display this help and exit")

@@ -2,6 +2,8 @@
 
 Joe Baker's Application of Programming Principles Assignment.
 
+This recieved 100/100 marks.
+
 ## Usage
 
 To start the server run:

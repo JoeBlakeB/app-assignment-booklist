@@ -173,7 +173,7 @@ const settings = {
             } 
             settingsHTML += ">" + number + "</option>";
         }
-        settingsHTML += "</select><h3>Books per page</h3></label></div></div>";
+        settingsHTML += "</select><h3>Books per page</h3></label></div><p>APP-Assignment-Booklist © Joe Baker 2022</p><p>Source code available at <a href='https://github.com/JoeBlakeB/app-assignment-booklist'>GitHub</a></p></div>";
         document.getElementById("detailsContainer").innerHTML = settingsHTML;
     },
     // Show search time check box clicked

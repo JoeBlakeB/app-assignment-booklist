@@ -118,7 +118,7 @@ def apiNew():
 def apiUpdate(bookID):
     """Update a books metadata"""
     if flask.request.json == None or flask.request.json == {}:
-        return flask.abort(422)
+        return {"success": False}, 422
     # Only edit book if it exists
     if db.bookGet(bookID):
         db.bookEdit(bookID, flask.request.json)
@@ -132,9 +132,9 @@ def apiDelete(bookID):
     """Delete a book"""
     # If the book does not exists, return 404
     if not db.bookGet(bookID):
-        return {"Deleted": False}, 404
+        return {"deleted": False}, 404
     db.bookDelete(bookID)
-    return {"Deleted": True}
+    return {"deleted": True}
 
 
 @booklist.route("/api/search", methods=["GET"])

@@ -35,6 +35,7 @@ To stop the server send a KeyboardInterrupt (ctrl + C).
 ## Misc
 
 - Copyright © JoeBlakeB (Joe Baker), All Rights Reserved
+- Documentation for the servers API is in the [API Reference file](APIReference.md)
 - Server tested with Python 3.10.4 on Linux and Windows
 - Client tested with Firefox and Chrome on Linux, Windows, and Android
 - Button icon SVGs from [Papirus Icon Theme](https://github.com/PapirusDevelopmentTeam/papirus-icon-theme)

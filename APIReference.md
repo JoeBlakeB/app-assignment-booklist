@@ -81,7 +81,7 @@ POST `/api/new` with a JSON containing [the books metadata as a JSON](#book-json
 
 Responds with a JSON stating if adding the book was successful along with the new books ID:
 
-```json
+``` js
 {
   "success": True,
   "bookID": bookID
@@ -98,7 +98,7 @@ PUT `/api/edit/<bookID>` with a JSON containing the books updated metadata [as a
 
 Responds with a JSON which just states if the edit was successful:
 
-```json
+``` js
 {
   "success": True
 }
@@ -115,7 +115,7 @@ DELETE `/api/delete/<bookID>`
 
 Responds with a JSON which just states if the delete was successful:
 
-```json
+``` js
 {
   "deleted": True
 }
@@ -139,7 +139,7 @@ Arguments:
 
 The response is a list of books with only part of the metadata, along with some information about the search:
 
-```json
+``` js
 {
   "books": [
     {
@@ -187,7 +187,7 @@ POST `/api/file/upload/<bookID>/<filename>` with the request body being the file
 
 The response will be a JSON stating if adding the upload was a success as well as the hashName of the file:
 
-```json
+``` js
 {
   "hashName": "79317e272fc98ee957a1c1372a260848.4.jpeg",
   "success": true
@@ -206,7 +206,7 @@ Response Status Codes:
 
 POST `/api/file/rename/<bookID>` with a JSON of the files to be renamed, the hashname being the key and the new filename being the value:
 
-```json
+``` js
 {
   "71bd3bdbe1b4aa2f4ee8af0bd26d5937.1.pdf": "Python_Guide.pdf"
 }
@@ -249,7 +249,7 @@ The files actual name is stored on the servers database and is shown on the inte
 
 A book as different data fields, not all are always filled but all will exist, here is an example of a books full JSON:
 
-```json
+``` js
 {
   "author": "Miguel Grinberg",
   "description": "",

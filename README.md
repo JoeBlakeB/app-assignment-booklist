@@ -1,8 +1,8 @@
 # APP Assignment Booklist
 
-Joe Baker's Application of Programming Principles Assignment.
+Joe Baker's Application of Programming Principles Assignment which received 100/100 marks.
 
-This recieved 100/100 marks.
+![Example Screenshot](https://github.com/joeblakeb/app-assignment-booklist/blob/master/Screenshot.png?raw=true)
 
 ## Usage
 

@@ -24,6 +24,16 @@ By default waitress will be used as the WSGI if it is installed and will use wer
 
 To stop the server send a KeyboardInterrupt (ctrl + C).
 
+## Using Docker
+
+```
+docker run -d \
+  -p 8080:8080 \
+  -v </your/local/data/dir>:/data \
+  --restart=always \
+  joeblakeb/booklist:latest
+```
+
 ## Dependencies
 
 - Python 3.7+
@@ -36,6 +46,6 @@ To stop the server send a KeyboardInterrupt (ctrl + C).
 
 - Copyright © JoeBlakeB (Joe Baker), All Rights Reserved
 - Documentation for the servers API is in the [API Reference file](APIReference.md)
-- Server tested with Python 3.10.4 on Linux and Windows
+- Server tested with Python 3.10.7 on Linux and Windows
 - Client tested with Firefox and Chrome on Linux, Windows, and Android
 - Button icon SVGs from [Papirus Icon Theme](https://github.com/PapirusDevelopmentTeam/papirus-icon-theme)

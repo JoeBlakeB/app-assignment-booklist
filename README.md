@@ -1,6 +1,10 @@
 # APP Assignment Booklist
 
-Joe Baker's Application of Programming Principles Assignment which received 100/100 marks.
+
+[![Demo](https://img.shields.io/badge/demo-%236c36f3.svg?style=for-the-badge&logo=flask&logoColor=white)](https://app-assignment-booklist.joeblakeb.com/)
+[![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)](https://hub.docker.com/r/joeblakeb/booklist)
+
+Joe Baker's Application of Programming Principles Assignment which received 100/100 marks. This is an eBook library which can store books and their metadata, as well as search for books by title, author, ISBN, or genre. You can also add, edit, and delete books, as well as upload, download, and delete files.
 
 ![Example Screenshot](https://github.com/joeblakeb/app-assignment-booklist/blob/master/Screenshot.png?raw=true)
 
@@ -28,6 +32,7 @@ To stop the server send a KeyboardInterrupt (ctrl + C).
 
 ```
 docker run -d \
+  --name=booklist \
   -p 8080:8080 \
   -v </your/local/data/dir>:/data \
   --restart=always \

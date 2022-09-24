@@ -334,7 +334,7 @@ class requestsDataTests(requestsTestsBase):
         for book in testData:
             bookID = server.db.bookAdd(book)
             r = self.delete(f"{self.baseUrl}/api/delete/{bookID}")
-            self.assertEqual(json.loads(r.content), {"Deleted": True})
+            self.assertEqual(json.loads(r.content), {"deleted": True})
             self.assertFalse(server.db.bookGet(bookID))
 
     def getBookIDList(self, response):
@@ -443,7 +443,7 @@ class requestsFilesTests(requestsTestsBase):
 
             # Delete
             r = self.delete(f"{self.baseUrl}/api/file/delete/{bookID}/{hashName}")
-            self.assertEqual(json.loads(r.content), {"Deleted": True})
+            self.assertEqual(json.loads(r.content), {"deleted": True})
 
 if __name__ == "__main__":
     unittest.main(verbosity=2, exit=False)

@@ -5,7 +5,9 @@
 import flask
 import os
 import sys
+import threading
 import time
+import traceback
 
 from database import database
 
@@ -238,9 +240,9 @@ def apiFileDelete(bookID, hashName):
     """Delete a books file."""
     status = db.fileDelete(bookID, hashName)
     if status:
-        return {"Deleted": True}
+        return {"deleted": True}
     else:
-        return {"Deleted": False}, 404
+        return {"deleted": False}, 404
 
 
 if __name__ == "__main__":
@@ -254,6 +256,7 @@ if __name__ == "__main__":
         print("  --port PORT       Set the servers port")
         print("  --werkzeug        Use werkzeug instead of waitress")
         print("  --data-dir DIR    Set the directory where data is stored")
+        print("  --no-autosave     Only save data.json when the server stops")
         exit()
 
     # Get host and port from argv or use the defaults
@@ -263,6 +266,7 @@ if __name__ == "__main__":
         host = sys.argv[sys.argv.index("--host") + 1]
     if "--port" in sys.argv:
         port = sys.argv[sys.argv.index("--port") + 1]
+    autosave = not ("--no-autosave" in sys.argv)
 
     # Use waitress as the WSGI server if it is installed,
     # but use built-in if it isnt, or if --werkzeug argument.
@@ -278,13 +282,21 @@ if __name__ == "__main__":
     db = database()
     db.load()
     fileIcons = fileIconsDict()
+    if autosave:
+        autosaveThread = threading.Thread(target=db.autosave)
+        autosaveThread.start()
 
     # Run server
-    if useWaitress:
-        waitress.serve(booklist, host=host, port=port, threads=8)
-    else:
-        booklist.run(host=host, port=port)
+    try:
+        if useWaitress:
+            waitress.serve(booklist, host=host, port=port, threads=8)
+        else:
+            booklist.run(host=host, port=port)
+    except:
+        traceback.print_exc()
 
     # Shut down
-    print("Saving database...")
+    if autosave:
+        db.shutdown = True
+        autosaveThread.join()
     db.save()

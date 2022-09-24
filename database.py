@@ -34,6 +34,10 @@ class database:
         "genre": 128
     }
     
+    # Vars for autosave
+    shutdown = False
+    dataChanged = False
+    
     fullFilePath = lambda self, filename : os.path.join(self.dataDir, filename)
     bookFilePath = lambda self, bookID, filename="" : os.path.join(self.dataDir, "books", bookID, filename)
 
@@ -68,6 +72,7 @@ class database:
 
     def save(self):
         """Save the database"""
+        self.dataChanged = False
         filename = self.fullFilePath(self.dataFilename)
 
         if os.path.exists(filename):
@@ -79,11 +84,21 @@ class database:
         with open(filename, "w") as dataFile:
             dataFile.write(json.dumps(self.data, indent=4))
 
-    def modified(self, bookID):
-        """Update the lastModified variable
-        
-        lastModified used by client to make browser reload images"""
-        self.data[bookID]["lastModified"] = int(time.time())
+    def autosave(self):
+        """Autosave the data if it has changed"""
+        while not self.shutdown:
+            if self.dataChanged:
+                self.save()
+            time.sleep(2)
+            
+    def modified(self, bookID=False):
+        """Recognise that data has changed
+
+        Set dataChanged to true to autosave the database, and
+        Update the lastModified variable if bookID is specified"""
+        self.dataChanged = True
+        if bookID:
+            self.data[bookID]["lastModified"] = int(time.time())
 
     def bookAdd(self, bookData):
         """Takes a dict with book data and returns the new book ID"""
@@ -104,6 +119,7 @@ class database:
         while bookID in self.data or bookID == None:
             bookID = str(uuid.uuid4())
         self.data[bookID] = newBook
+        self.modified()
         return bookID
 
     def bookEdit(self, bookID, newData):
@@ -135,6 +151,7 @@ class database:
         bookPath = self.bookFilePath(bookID)
         if os.path.exists(bookPath):
             shutil.rmtree(bookPath)
+        self.modified()
         del self.data[bookID]
     
     def bookSearch(self, query):
@@ -249,6 +266,7 @@ class database:
             "type": fileType,
             "size": len(data)
         }
+        self.modified()
         return hashName
 
     def fileGet(self, bookID, hashName):
@@ -269,6 +287,7 @@ class database:
             newFilename = self.safeFilename(newFilename)
             self.data[bookID]["files"][file["fileID"]]["name"] = newFilename
             return True
+        self.modified()
         return False
 
     def fileDelete(self, bookID, hashName):
@@ -282,4 +301,5 @@ class database:
             if not os.path.exists(filename):
                 del self.data[bookID]["files"][file["fileID"]]
                 return True
+        self.modified()
         return False

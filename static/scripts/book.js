@@ -394,6 +394,14 @@ const api = {
         status.innerText = uploadStatusMessage;
 
         let book = this.getData();
+
+        // Abort if book has no title
+        if ((!("title" in book) && url == "/api/new") || (book.title == "")) {
+            status.className = "error";
+            status.innerText = "You must enter a book title.";
+            return;
+        }
+    
         // Skip metadata upload if none of the metadata has been changed
         if (JSON.stringify(book) == "{}") {
             api.requestsCount = api.uploadFiles();

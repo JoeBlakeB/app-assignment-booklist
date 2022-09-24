@@ -103,14 +103,14 @@ class database:
     def bookAdd(self, bookData):
         """Takes a dict with book data and returns the new book ID"""
         # If book doesnt have a title, dont add to database
-        if not bookData.get("title"):
+        if not bookData.get("title") or str(bookData.get("title")).strip() == "":
             return False
         
         # Generate book dict with all fields
         newBook = {"files": {"count": 0}, "hasCover": False, "lastModified": 0}
         for field in self.bookFields:
             if field in bookData:
-                newBook[field] = bookData[field][:self.maxLengths[field]]
+                newBook[field] = bookData[field].strip()[:self.maxLengths[field]]
             else:
                 newBook[field] = ""
 
@@ -124,9 +124,12 @@ class database:
 
     def bookEdit(self, bookID, newData):
         """Edit bookIDs data in the fields in of newData"""
+        if "title" in newData:
+            if newData["title"].strip() == "":
+                del newData["title"]
         for field in self.bookFields:
             if field in newData:
-                self.data[bookID][field] = newData[field][:self.maxLengths[field]]
+                self.data[bookID][field] = newData[field].strip()[:self.maxLengths[field]]
         self.modified(bookID)
 
     def bookGet(self, bookID, search=False):

@@ -1,7 +1,7 @@
 FROM python:latest
 
 LABEL maintainer="Joe Baker <JoeBlakeB>" \
-      version="1.1.1" \
+      version="1.1.2" \
       description="eBook Library Server"
 STOPSIGNAL SIGINT
 ENV PUID=1000 \
